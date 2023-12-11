@@ -1,5 +1,6 @@
 import { communication, maps, social, weather } from "./icon-sets";
-import { WEIGHTS } from "./constants.js";
+import { COLOR_MODES, WEIGHTS } from "./constants.js";
+import { colorModes } from "./color-modes/index.js";
 
 function loadImage(file) {
   return new Promise((resolve, reject) => {
@@ -47,7 +48,7 @@ function getPixelData({ image, size }) {
     }, [])
     .map((chunk) => {
       const [red, green, blue] = chunk;
-      const lightness = chunk.slice(0, 3).reduce((a, b) => (a, b)) / 3;
+      const lightness = Math.round(chunk.slice(0, 3).reduce((a, b) => (a, b)) / 3);
       const color = `rgb(${red}, ${green}, ${blue})`;
       const weight =
         WEIGHTS[Math.floor((lightness / 255) * (WEIGHTS.length - 1))];
@@ -64,13 +65,20 @@ function getPixelData({ image, size }) {
     });
 }
 
-function getPixelHtml({ pixel, threshold = 128, symbolSet = communication }) {
+function getPixelHtml({
+  pixel,
+  threshold = 128,
+  symbolSet = communication,
+  colorMode = METHODS[FULL_COLOR],
+}) {
   const { lightness } = pixel;
   const symbol = symbolSet.getSymbol(lightness);
+  const colorFunction = colorModes[colorMode];
 
   const picker = (style) => {
-    const backgroundColor = style.pixel === "light" ? "white" : pixel.color;
-    const textColor = style.pixel === "light" ? pixel.color : "white";
+    const backgroundColor =
+      style.pixel === "light" ? "white" : colorFunction(pixel);
+    const textColor = style.pixel === "light" ? colorFunction(pixel) : "white";
     const fillColor = style.symbol === "fill" ? 1 : 0;
     const showText = pixel.lightness !== 0 && pixel.lightness !== 255;
     return `
@@ -121,12 +129,13 @@ function initializeUi() {
   const imageInput = document.getElementById("image");
   const thresholdInput = document.getElementById("threshold");
   const symbolSetInput = document.getElementById("symbol-set");
-  const inputs = [imageInput, thresholdInput, symbolSetInput];
   const output = document.getElementById("output");
   const errorLog = document.getElementById("errors");
   const clearErrorsButton = document.getElementById("clear-errors");
   const widthInput = document.getElementById("width");
   const heightInput = document.getElementById("height");
+  const colorModeInput = document.getElementById("color-mode");
+  const inputs = [thresholdInput, symbolSetInput, colorModeInput];
 
   const logError = (error) => {
     errorLog.innerHTML += error.message;
@@ -210,12 +219,14 @@ function initializeUi() {
         try {
           const threshold = thresholdInput.value;
           const symbolSet = getSymbolSet(symbolSetInput.value);
+          const colorMode = colorModeInput.value;
 
           output.innerHTML = getHtml({
             pixels,
             size,
             threshold,
             symbolSet,
+            colorMode,
           });
         } catch (error) {
           return logError(error);
