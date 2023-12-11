@@ -1,0 +1,21 @@
+{
+  "name": "google-ascii-mural",
+  "version": "0.1.0-alpha",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build:js": "esbuild src/index.js --bundle --minify --sourcemap --outfile=build/index.js",
+    "build:css": "tailwindcss build -i src/index.css -o build/index.css",
+    "build": "yarn run build:js && yarn run build:css",
+    "serve": "http-server -c-1",
+    "start": "yarn run build:js & yarn run build:css --watch=forever"
+  },
+  "author": "Linked by Air",
+  "license": "ISC",
+  "devDependencies": {
+    "esbuild": "^0.19.9",
+    "http-server": "^14.1.1",
+    "tailwindcss": "^3.3.6"
+  },
+  "dependencies": {}
+}

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" type="text/css" href="build/index.css">
+    <!-- include the entire Variable Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  </head>
+  <body class="h-full">
+    <div class="h-full flex flex-col md:flex-row">
+      <div id="ouput" class="grow shrink"></div>
+      <aside class="grow-0 shrink-0 md:max-w-sm md:flex md:flex-col">
+        <div class="bg-blue-200 text-blue-800 p-4 md:grow md:shrink">
+          <h3 class="text-lg bold mb-4">Controls</h3>
+          <div class="mb-4">
+            <label>
+              <span class="block text-xs mb-2">Image</span>
+              <input type="file" id="image" accept="image/*" />
+            </label>
+          </div>
+  
+          <div class="mb-4">
+            <label>
+              <span class="block text-xs mb-2">Lightness threshold</span>
+              <input type="range" id="threshold" min="0" max="255" value="127" />
+            </label>
+          </div>
+  
+          <div class="mb-4">
+            <label>
+              <span class="block text-xs mb-2">Symbol set</span>
+              <select id="symbol-set" class="p-2">
+                <option value="weather">Weather</option>
+                <option value="communication">Communication</option>
+                <option value="maps">Maps</option>
+                <option value="social">Social</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div class="bg-red-200 text-red-700 p-4 md:grow md:shrink md:flex md:flex-col">
+          <h3 class="text-lg bold mb-4">Errors</h3>
+          <div id="errors" class="font-mono md:grow"></div>
+
+          <button id="clear-errors" class="bg-red-100 py-2 px-8 border-0 self-end">Clear</button>
+        </div>
+      </aside>
+    </div>
+    <script src="build/index.js"></script>
+  </body>
+</html>
