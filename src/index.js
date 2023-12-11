@@ -89,7 +89,7 @@ function foobar(pixel, symbol, style) {
   const showText = pixel.lightness !== 0 && pixel.lightness !== 255;
   return `
   <span
-    class='material-symbols-outlined flex justify-center items-center w-[12px] h-[12px]' 
+    class='material-symbols-outlined shrink-0 flex justify-center items-center w-[12px] h-[12px]' 
     style="
       display: flex !important;
       font-size: 9px !important;
