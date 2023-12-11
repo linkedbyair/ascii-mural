@@ -90,6 +90,7 @@ function foobar(pixel, symbol, style) {
   <span
     class='material-symbols-outlined flex justify-center items-center w-[12px] h-[12px]' 
     style="
+      display: flex !important;
       font-size: 9px !important;
       background-color: ${backgroundColor};
       color: white;
@@ -148,18 +149,18 @@ function initializeUi() {
     }
   };
 
-  const updateSizes = (image, event) => {
-    if (event.target === widthInput) {
-      const width = parseInt(widthInput.value, 10);
-      const height = Math.floor(width / (image.width / image.height));
-      if (heightInput.value !== height) {
-        heightInput.value = height;
-      }
-    } else {
+  const updateSizes = (image, event = {}) => {
+    if (event.target && event.target === heightInput) {
       const height = parseInit(heightInput.value, 10);
       const width = Math.floor(height * (image.width / image.height));
       if (widthInput.value !== width) {
         widthInput.value = width;
+      }
+    } else {
+      const width = parseInt(widthInput.value, 10);
+      const height = Math.floor(width / (image.width / image.height));
+      if (heightInput.value !== height) {
+        heightInput.value = height;
       }
     }
   };
@@ -171,16 +172,20 @@ function initializeUi() {
     };
   };
 
-  let unlisteners = [];
-
-  const unlistenExistingEvents = () => {
-    if (Boolean(unlisteners.length)) {
-      unlisteners.forEach((unlistener) => unlistener());
-    }
+  let primaryUnlisteners = [];
+  const unlistenPrimaryEvents = () => {
+    primaryUnlisteners.forEach((unlistener) => unlistener());
+    primaryUnlisteners = [];
+  };
+  let secondaryUnlisteners = [];
+  const unlistenSecondaryEvents = () => {
+    secondaryUnlisteners.forEach((unlistener) => unlistener());
+    secondaryUnlisteners = [];
   };
 
   const handleImageChange = async () => {
-    unlistenExistingEvents();
+    unlistenPrimaryEvents();
+    unlistenSecondaryEvents();
 
     let image;
     try {
@@ -191,10 +196,10 @@ function initializeUi() {
     }
 
     updateSizes(image, { target: widthInput });
-    
-    const handleSizeChange = (e) => {
-      unlistenExistingEvents();
 
+    const handleSizeChange = (e) => {
+      unlistenSecondaryEvents();
+      updateSizes(image, e);
       const size = readSizes();
       const pixels = getPixelData({
         image,
@@ -205,7 +210,7 @@ function initializeUi() {
         try {
           const threshold = thresholdInput.value;
           const symbolSet = getSymbolSet(symbolSetInput.value);
-  
+
           output.innerHTML = getHtml({
             pixels,
             size,
@@ -217,9 +222,9 @@ function initializeUi() {
         }
       };
 
-      unlisteners = inputs.map((input) => {
+      secondaryUnlisteners = inputs.map((input) => {
         input.addEventListener("change", handleSettingChange);
-  
+
         return () => {
           input.removeEventListener("change", handleSettingChange);
         };
@@ -230,7 +235,9 @@ function initializeUi() {
 
     [widthInput, heightInput].forEach((input) => {
       input.addEventListener("change", handleSizeChange);
-      unlisteners.push(() => input.removeEventListener("change", handleSizeChange));
+      primaryUnlisteners.push(() =>
+        input.removeEventListener("change", handleSizeChange)
+      );
     });
 
     handleSizeChange();
