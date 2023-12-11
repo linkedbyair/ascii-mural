@@ -22,8 +22,6 @@ function getPixelData({ image, size }) {
   size.width ||= image.width;
   size.height ||= image.height;
 
-  image.width = size.width;
-  image.height = size.height;
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
   canvas.width = size.width;
@@ -167,7 +165,7 @@ function initializeUi() {
       }
     } else {
       const width = parseInt(widthInput.value, 10);
-      const height = Math.floor(width / (image.width / image.height));
+      const height = Math.floor(width * (image.height / image.width));
       if (heightInput.value !== height) {
         heightInput.value = height;
       }
