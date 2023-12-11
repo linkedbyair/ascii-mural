@@ -84,6 +84,7 @@ function getPixelHtml({ pixel, threshold = 128, symbolSet = communication }) {
 
 function foobar(pixel, symbol, style) {
   const backgroundColor = style.pixel === "light" ? "white" : pixel.color;
+  const textColor = style.pixel === "light" ? pixel.color : "white";
   const fillColor = style.symbol === "fill" ? 1 : 0;
   const showText = pixel.lightness !== 0 && pixel.lightness !== 255;
   return `
@@ -93,7 +94,7 @@ function foobar(pixel, symbol, style) {
       display: flex !important;
       font-size: 9px !important;
       background-color: ${backgroundColor};
-      color: white;
+      color: ${textColor};
       font-variation-settings: 'wght' ${
         pixel.weight
       }, 'FILL_color' ${fillColor};
