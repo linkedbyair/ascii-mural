@@ -1,9 +1,39 @@
 import { communication, maps, social, weather } from "./icon-sets";
 import { WEIGHTS } from "./constants.js";
 
-function getPixelData(image) {
-  image.loadPixels();
-  return image.pixels
+function loadImage(file) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const fileReader = new FileReader();
+    fileReader.onload = (e) => {
+      image.src = e.target.result;
+    };
+    image.onload = () => {
+      resolve(image);
+    };
+    fileReader.onerror = reject;
+    fileReader.readAsDataURL(file);
+  });
+}
+
+function getPixelData({ image, size }) {
+  size ||= {};
+  size.width ||= image.width;
+  size.height ||= image.height;
+
+  image.width = size.width;
+  image.height = size.height;
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  canvas.width = size.width;
+  canvas.height = size.height;
+  context.drawImage(image, 0, 0, size.width, size.height);
+  const imageData = context.getImageData(0, 0, size.width, size.height);
+  if (!imageData || !imageData.data) {
+    throw new Error("Could not get image data");
+  }
+
+  return imageData.data
     .reduce((acc, cur, index) => {
       const chunkIndex = Math.floor(index / 4);
 
@@ -15,15 +45,23 @@ function getPixelData(image) {
 
       return acc;
     }, [])
-    .map((chunk) => ({
-      red: chunk[0],
-      green: chunk[1],
-      blue: chunk[2],
-      lightness: chunk.slice(0, 3).reduce((a, b) => (a, b)) / 3,
-      color: `rgb(${chunk[0]}, ${chunk[1]}, ${chunk[2]})`,
-      weight: WEIGHTS[Math.floor((lightness / 255) * (WEIGHTS.length - 1))],
-      radius: floor(map(lightness, 0, 255, 0, 50)) + "%",
-    }));
+    .map((chunk) => {
+      const [red, green, blue] = chunk;
+      const lightness = chunk.slice(0, 3).reduce((a, b) => (a, b)) / 3;
+      const color = `rgb(${red}, ${green}, ${blue})`;
+      const weight =
+        WEIGHTS[Math.floor((lightness / 255) * (WEIGHTS.length - 1))];
+      const radius = Math.floor((lightness / 255) * 50) + "%";
+      return {
+        red,
+        green,
+        blue,
+        lightness,
+        color,
+        weight,
+        radius,
+      };
+    });
 }
 
 function getPixelHtml({ pixel, threshold = 128, symbolSet = communication }) {
@@ -50,8 +88,9 @@ function foobar(pixel, symbol, style) {
   const showText = pixel.lightness !== 0 && pixel.lightness !== 255;
   return `
   <span
-    class='material-symbols-outlined' 
+    class='material-symbols-outlined flex justify-center items-center w-[12px] h-[12px]' 
     style="
+      font-size: 9px !important;
       background-color: ${backgroundColor};
       color: white;
       font-variation-settings: 'wght' ${
@@ -65,24 +104,16 @@ function foobar(pixel, symbol, style) {
   </span>`;
 }
 
-function getImage(source) {
-  const image = loadImage(source);
-  return {
-    image,
-    width: image.width,
-    height: image.height,
-    pixels: getPixelData(image),
-  };
-}
-
-function getHtml({ image, ...props }) {
-  return Array.from({ length: image.height }).map((_, rowIndex) => {
-    const inner = Array.from({ length: image.width }).map((_, columnIndex) => {
-      const pixelIndex = rowIndex * image.width + columnIndex;
-      return getPixelHtml({ pixel: image.pixels[pixelIndex], ...props });
-    });
-    return `<div class="row">${inner.join("")}</div>`;
-  }).join("");
+function getHtml({ pixels, size, ...props }) {
+  return Array.from({ length: size.height })
+    .map((_, rowIndex) => {
+      const inner = Array.from({ length: size.width }).map((_, columnIndex) => {
+        const pixelIndex = rowIndex * size.width + columnIndex;
+        return getPixelHtml({ pixel: pixels[pixelIndex], ...props });
+      });
+      return `<div class="flex flex-row no-wrap">${inner.join("")}</div>`;
+    })
+    .join("");
 }
 
 function initializeUi() {
@@ -93,17 +124,19 @@ function initializeUi() {
   const output = document.getElementById("output");
   const errorLog = document.getElementById("errors");
   const clearErrorsButton = document.getElementById("clear-errors");
+  const widthInput = document.getElementById("width");
+  const heightInput = document.getElementById("height");
 
   const logError = (error) => {
     errorLog.innerHTML += error.message;
-  }
+  };
 
   const clearErrors = () => {
     errorLog.innerHTML = "";
-  }
+  };
 
   const getSymbolSet = (key) => {
-    switch(key) {
+    switch (key) {
       case "communication":
         return communication;
       case "maps":
@@ -112,49 +145,96 @@ function initializeUi() {
         return social;
       default:
         return weather;
+    }
+  };
+
+  const updateSizes = (image, event) => {
+    if (event.target === widthInput) {
+      const width = parseInt(widthInput.value, 10);
+      const height = Math.floor(width / (image.width / image.height));
+      if (heightInput.value !== height) {
+        heightInput.value = height;
+      }
+    } else {
+      const height = parseInit(heightInput.value, 10);
+      const width = Math.floor(height * (image.width / image.height));
+      if (widthInput.value !== width) {
+        widthInput.value = width;
+      }
+    }
+  };
+
+  const readSizes = () => {
+    return {
+      width: parseInt(widthInput.value, 10),
+      height: parseInt(heightInput.value, 10),
     };
-  }
+  };
 
   let unlisteners = [];
 
-  const handleImageChange = () => {
-    debugger;
-    let image;
-    try {
-      image = getImage(imageInput.value);
-    } catch (error) {
-      return logError(error);
-    }
-
+  const unlistenExistingEvents = () => {
     if (Boolean(unlisteners.length)) {
       unlisteners.forEach((unlistener) => unlistener());
     }
+  };
 
-    const handleSettingChange = () => {
-      try {
-        const threshold = thresholdInput.value;
-        const symbolSet = getSymbolSet(symbolSetInput.value);
-        
-        output.innerHTML = getHtml({
-          image,
-          threshold,
-          symbolSet,
-        });
-      } catch(error) {
-        return logError(error);
-      }
-    };
+  const handleImageChange = async () => {
+    unlistenExistingEvents();
+
+    let image;
+    try {
+      image = await loadImage(imageInput.files[0]);
+    } catch (error) {
+      console.error(error);
+      return logError(error);
+    }
+
+    updateSizes(image, { target: widthInput });
     
-    unlisteners = inputs.map((input) => {
-      input.addEventListener("change", handleSettingChange);
+    const handleSizeChange = (e) => {
+      unlistenExistingEvents();
 
-      return () => {
-        input.removeEventListener("change", handleSettingChange);
+      const size = readSizes();
+      const pixels = getPixelData({
+        image,
+        size,
+      });
+
+      const handleSettingChange = () => {
+        try {
+          const threshold = thresholdInput.value;
+          const symbolSet = getSymbolSet(symbolSetInput.value);
+  
+          output.innerHTML = getHtml({
+            pixels,
+            size,
+            threshold,
+            symbolSet,
+          });
+        } catch (error) {
+          return logError(error);
+        }
       };
+
+      unlisteners = inputs.map((input) => {
+        input.addEventListener("change", handleSettingChange);
+  
+        return () => {
+          input.removeEventListener("change", handleSettingChange);
+        };
+      });
+
+      handleSettingChange();
+    };
+
+    [widthInput, heightInput].forEach((input) => {
+      input.addEventListener("change", handleSizeChange);
+      unlisteners.push(() => input.removeEventListener("change", handleSizeChange));
     });
 
-    handleSettingChange();
-  }
+    handleSizeChange();
+  };
 
   clearErrorsButton.addEventListener("click", clearErrors);
   imageInput.addEventListener("change", handleImageChange);
