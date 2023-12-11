@@ -67,7 +67,30 @@ function getPixelData({ image, size }) {
 function getPixelHtml({ pixel, threshold = 128, symbolSet = communication }) {
   const { lightness } = pixel;
   const symbol = symbolSet.getSymbol(lightness);
-  const picker = foobar.bind(this, pixel, symbol);
+
+  const picker = (style) => {
+    const backgroundColor = style.pixel === "light" ? "white" : pixel.color;
+    const textColor = style.pixel === "light" ? pixel.color : "white";
+    const fillColor = style.symbol === "fill" ? 1 : 0;
+    const showText = pixel.lightness !== 0 && pixel.lightness !== 255;
+    return `
+    <span
+      class='material-symbols-outlined shrink-0 flex justify-center items-center w-[12px] h-[12px]' 
+      style="
+        display: flex !important;
+        font-size: 9px !important;
+        background-color: ${backgroundColor};
+        color: ${textColor};
+        font-variation-settings: 'wght' ${
+          pixel.weight
+        }, 'FILL_color' ${fillColor};
+        border-radius: ${pixel.radius}
+      "
+      data-character="${symbol.index}"
+    >
+      ${showText ? symbol.text : ""}
+    </span>`;
+  };
 
   if (lightness < threshold) {
     return picker({
@@ -80,30 +103,6 @@ function getPixelHtml({ pixel, threshold = 128, symbolSet = communication }) {
       symbol: lightness < 163 ? "fill" : "outline",
     });
   }
-}
-
-function foobar(pixel, symbol, style) {
-  const backgroundColor = style.pixel === "light" ? "white" : pixel.color;
-  const textColor = style.pixel === "light" ? pixel.color : "white";
-  const fillColor = style.symbol === "fill" ? 1 : 0;
-  const showText = pixel.lightness !== 0 && pixel.lightness !== 255;
-  return `
-  <span
-    class='material-symbols-outlined shrink-0 flex justify-center items-center w-[12px] h-[12px]' 
-    style="
-      display: flex !important;
-      font-size: 9px !important;
-      background-color: ${backgroundColor};
-      color: ${textColor};
-      font-variation-settings: 'wght' ${
-        pixel.weight
-      }, 'FILL_color' ${fillColor};
-      border-radius: ${pixel.radius}
-    "
-    data-character="${symbol.index}"
-  >
-    ${showText ? symbol.text : ""}
-  </span>`;
 }
 
 function getHtml({ pixels, size, ...props }) {
