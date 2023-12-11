@@ -158,7 +158,7 @@ function initializeUi() {
 
   const updateSizes = (image, event = {}) => {
     if (event.target && event.target === heightInput) {
-      const height = parseInit(heightInput.value, 10);
+      const height = parseInt(heightInput.value, 10);
       const width = Math.floor(height * (image.width / image.height));
       if (widthInput.value !== width) {
         widthInput.value = width;
