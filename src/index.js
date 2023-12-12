@@ -46,16 +46,17 @@ function getPixelData({ image, size }) {
     }, [])
     .map((chunk) => {
       const [red, green, blue] = chunk;
-      const lightness = Math.round(chunk.slice(0, 3).reduce((a, b) => (a, b)) / 3);
+      // Photometric/digital ITU BT.709 http://www.itu.int/rec/R-REC-BT.709
+      const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
       const color = `rgb(${red}, ${green}, ${blue})`;
       const weight =
-        WEIGHTS[Math.floor((lightness / 255) * (WEIGHTS.length - 1))];
-      const radius = Math.floor((lightness / 255) * 50) + "%";
+        WEIGHTS[Math.floor((luminance / 255) * (WEIGHTS.length - 1))];
+      const radius = Math.floor((luminance / 255) * 50) + "%";
       return {
         red,
         green,
         blue,
-        lightness,
+        luminance,
         color,
         weight,
         radius,
@@ -69,8 +70,8 @@ function getPixelHtml({
   symbolSet = communication,
   colorMode = METHODS[FULL_COLOR],
 }) {
-  const { lightness } = pixel;
-  const symbol = symbolSet.getSymbol(lightness);
+  const { luminance } = pixel;
+  const symbol = symbolSet.getSymbol(luminance);
   const colorFunction = colorModes[colorMode];
 
   const picker = (style) => {
@@ -78,7 +79,7 @@ function getPixelHtml({
       style.pixel === "light" ? "white" : colorFunction(pixel);
     const textColor = style.pixel === "light" ? colorFunction(pixel) : "white";
     const fillColor = style.symbol === "fill" ? 1 : 0;
-    const showText = pixel.lightness !== 0 && pixel.lightness !== 255;
+    const showText = pixel.luminance !== 0 && pixel.luminance !== 255;
     return `
     <span
       class='material-symbols-outlined shrink-0 flex justify-center items-center w-[12px] h-[12px]' 
@@ -98,15 +99,15 @@ function getPixelHtml({
     </span>`;
   };
 
-  if (lightness < threshold) {
+  if (luminance < threshold) {
     return picker({
       pixel: "dark",
-      symbol: lightness > threshold / 2 ? "fill" : "outline",
+      symbol: luminance > threshold / 2 ? "fill" : "outline",
     });
   } else {
     return picker({
       pixel: "light",
-      symbol: lightness < 163 ? "fill" : "outline",
+      symbol: luminance < 163 ? "fill" : "outline",
     });
   }
 }
