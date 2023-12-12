@@ -4,12 +4,12 @@ export function fullColor({red,green,blue}) {
   return `rgb(${red}, ${green}, ${blue})`;
 }
 
-export function grayscale({lightness}) {
-  return `rgb(${lightness}, ${lightness}, ${lightness})`;
+export function grayscale({luminance}) {
+  return `rgb(${luminance}, ${luminance}, ${luminance})`;
 }
 
-export function blackAndWhite({lightness}) {
-  return lightness > 127 ? "#fff" : "#000";
+export function blackAndWhite({luminance}) {
+  return luminance > 127 ? "#fff" : "#000";
 }
 
 export const colorModes = {
