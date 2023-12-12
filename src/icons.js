@@ -1,5 +1,7 @@
 import * as htmlToImage from "html-to-image";
 
+window.htmlToImage = htmlToImage;
+
 const weather = {
   name: "weather",
   symbols: [
@@ -647,6 +649,8 @@ function getIconHTML() {
             ${symbol}
           </span>
         </td>
+        <td class="js-symbol__canvas-container">
+        </td>
         <td>
           <span class="js-symbol__luminance"></span>
         </td>
@@ -662,6 +666,9 @@ function getIconHTML() {
           <span class="text-2xl font-bold mb-4">${iconSet.name}</span>
         </summary>
         <div class="mt-2 mb-4">
+          <button class="js-redraw bg-[khaki] border border-black px-1 py-2 text-xs" data-section="${iconSet.name}">
+            Redraw on canvas
+          </button>
           <button class="js-generate-images bg-[khaki] border border-black px-1 py-2 text-xs" data-section="${iconSet.name}">
             Get luminance
           </button>
@@ -691,6 +698,7 @@ function getIconHTML() {
             <tr>
               <th class="text-left font-normal text-xs">Name</th>
               <th class="text-left font-normal text-xs">Icon</th>
+              <th class="text-left font-normal text-xs">Canvas</th>
               <th class="text-left font-normal text-xs">Luminance</th>
               <th class="text-left font-normal text-xs">Luminance (scaled)</th>
             </tr>
@@ -705,28 +713,42 @@ function getIconHTML() {
     .join("");
 }
 
-function recordLuminanceValues(section) {
+function redrawIconsOnCanvas(section) {
   const { symbols } = section;
   Object.values(symbols).forEach((elements) => {
-    htmlToImage.toPixelData(elements.icon).then((data) => {
-      const chunks = data.reduce((acc, value, index) => {
-        const chunkIndex = Math.floor(index / 4);
-        if (!acc[chunkIndex]) {
-          acc[chunkIndex] = [];
-        }
-        acc[chunkIndex].push(value);
-        return acc;
-      }, []);
-      const luminanceByPixel = chunks.map((chunk) => {
-        const [r, g, b] = chunk;
-        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-      });
-      const averageLuminance = Math.round(
-        luminanceByPixel.reduce((acc, value) => acc + value, 0) /
-          luminanceByPixel.length
-      );
-      elements.luminance.textContent = averageLuminance;
+    htmlToImage.toCanvas(elements.icon).then((canvas) => {
+      elements.canvasContainer.appendChild(canvas);
+      elements.canvas = canvas;
     });
+  });
+}
+
+function recordLuminanceValues(section) {
+  const { symbols } = section;
+  Object.entries(symbols).forEach(([name, elements]) => {
+    const context = elements.canvas.getContext("2d");
+    const imageData = context.getImageData(0, 0, 48, 48);
+    const data = imageData.data;
+    const chunks = data.reduce((acc, value, index) => {
+      const chunkIndex = Math.floor(index / 4);
+      if (!acc[chunkIndex]) {
+        acc[chunkIndex] = [];
+      }
+      acc[chunkIndex].push(value);
+      return acc;
+    }, []);
+    const luminanceByPixel = chunks.map(([r, g, b]) => {
+      if ([r, g, b].some((channel) => channel >= 128)) {
+        return 255;
+      } else {
+        return 0;
+      }
+    });
+    const averageLuminance = Math.round(
+      luminanceByPixel.reduce((acc, value) => acc + value, 0) /
+        luminanceByPixel.length
+    );
+    elements.luminance.textContent = averageLuminance;
   });
 }
 
@@ -772,7 +794,6 @@ export const ${name} = new SymbolSet("${name}", [
     .join(",\n  ")}
 ]);
   `;
-  console.log(sorted);
 }
 
 function initialize() {
@@ -791,10 +812,22 @@ function initialize() {
           const scaledLuminance = element.querySelector(
             ".js-symbol__scaled-luminance"
           );
-          acc[name] = { element, icon, luminance, scaledLuminance };
+          const canvasContainer = element.querySelector(
+            ".js-symbol__canvas-container"
+          );
+          acc[name] = {
+            element,
+            icon,
+            luminance,
+            scaledLuminance,
+            canvasContainer,
+          };
           return acc;
         },
         {}
+      );
+      const redrawButton = section.querySelector(
+        `.js-redraw[data-section=${name}]`
       );
       const luminanceButton = section.querySelector(
         `.js-generate-images[data-section=${name}]`
@@ -811,6 +844,7 @@ function initialize() {
       acc[name] = {
         element: section,
         symbols,
+        redrawButton,
         luminanceButton,
         scaleButton,
         exportButton,
@@ -823,10 +857,12 @@ function initialize() {
     {}
   );
 
-  console.log(sections);
-
   Object.entries(sections).forEach(([name, section]) => {
-    const { luminanceButton, scaleButton, exportButton } = section;
+    const { redrawButton, luminanceButton, scaleButton, exportButton } =
+      section;
+    redrawButton.addEventListener("click", () => {
+      redrawIconsOnCanvas(section);
+    });
     luminanceButton.addEventListener("click", () => {
       recordLuminanceValues(section);
     });
