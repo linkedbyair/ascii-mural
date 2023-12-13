@@ -540,6 +540,10 @@ video {
   --tw-backdrop-sepia:  ;
 }
 
+.static {
+  position: static;
+}
+
 .mb-1 {
   margin-bottom: 0.25rem;
 }
@@ -692,6 +696,11 @@ video {
 .bg-\[khaki\] {
   --tw-bg-opacity: 1;
   background-color: rgb(240 230 140 / var(--tw-bg-opacity));
+}
+
+.bg-white {
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 255 255 / var(--tw-bg-opacity));
 }
 
 .p-2 {

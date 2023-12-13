@@ -64,52 +64,52 @@ function getPixelData({ image, size }) {
     });
 }
 
-function getPixelHtml({
-  pixel,
-  threshold = 128,
-  symbolSet = communication,
-  colorMode = METHODS[FULL_COLOR],
-}) {
+function getPixelHtml({ pixel, settings = {} }) {
+  const {
+    threshold = 128,
+    symbolSet = communication,
+    colorMode = METHODS[FULL_COLOR],
+    // bwThreshold = 128,
+  } = settings;
   const { luminance } = pixel;
   const symbol = symbolSet.getSymbol(luminance);
-  const colorFunction = colorModes[colorMode];
+  const colorFunction = colorModes[colorMode].bind(null, settings);
+  const pixelStyle = luminance < threshold ? "dark" : "light";
+  const symbolStyle = luminance > threshold / 2 ? "fill" : "outline";
+  // const backgroundColor =
+  //   pixelStyle === "light" ? "white" : colorFunction(pixel);
+  const backgroundColor =
+    pixelStyle === "light" ? "white" : colorFunction(pixel);
+  const textColor = pixelStyle === "light" ? colorFunction(pixel) : "white";
+  const fillColor = symbolStyle === "fill" ? 1 : 0;
+  const showText = pixel.luminance !== 255;
 
-  const picker = (style) => {
-    const backgroundColor =
-      style.pixel === "light" ? "white" : colorFunction(pixel);
-    const textColor = style.pixel === "light" ? colorFunction(pixel) : "white";
-    const fillColor = style.symbol === "fill" ? 1 : 0;
-    const showText = pixel.luminance !== 0 && pixel.luminance !== 255;
-    return `
-    <span
-      class='material-symbols-outlined shrink-0 flex justify-center items-center w-[12px] h-[12px]' 
-      style="
-        display: flex !important;
-        font-size: 9px !important;
-        background-color: ${backgroundColor};
-        color: ${textColor};
-        font-variation-settings: 'wght' ${
-          pixel.weight
-        }, 'FILL_color' ${fillColor};
-        border-radius: ${pixel.radius}
-      "
-      data-character="${symbol.index}"
-    >
-      ${showText ? symbol.text : ""}
-    </span>`;
-  };
-
-  if (luminance < threshold) {
-    return picker({
-      pixel: "dark",
-      symbol: luminance > threshold / 2 ? "fill" : "outline",
-    });
-  } else {
-    return picker({
-      pixel: "light",
-      symbol: luminance < 163 ? "fill" : "outline",
-    });
-  }
+  return `
+  <span
+    class='material-symbols-outlined shrink-0 flex justify-center items-center w-[12px] h-[12px]' 
+    style="
+      display: flex !important;
+      font-size: 9px !important;
+      background-color: ${backgroundColor};
+      color: ${textColor};
+      font-variation-settings: 'wght' ${
+        pixel.weight
+      }, 'FILL_color' ${fillColor};
+      border-radius: ${pixel.radius}
+    "
+    data-pixel-style="${pixelStyle}"
+    data-symbol-style="${symbolStyle}"
+    data-color-mode="${colorMode}"
+    data-color="${pixel.color}"
+    data-color-affected="${colorFunction(pixel.color)}"
+    data-luminance="${pixel.luminance}"
+    data-weight="${pixel.weight}"
+    data-radius="${pixel.radius}"
+    data-threshold="${threshold}"
+    data-character="${symbol.index}"
+  >
+    ${showText ? symbol.text : ""}
+  </span>`;
 }
 
 function getHtml({ pixels, size, ...props }) {
@@ -117,7 +117,7 @@ function getHtml({ pixels, size, ...props }) {
     .map((_, rowIndex) => {
       const inner = Array.from({ length: size.width }).map((_, columnIndex) => {
         const pixelIndex = rowIndex * size.width + columnIndex;
-        return getPixelHtml({ pixel: pixels[pixelIndex], ...props });
+        return getPixelHtml({ pixel: pixels[pixelIndex], settings: props });
       });
       return `<div class="flex flex-row no-wrap">${inner.join("")}</div>`;
     })
@@ -134,7 +134,13 @@ function initializeUi() {
   const widthInput = document.getElementById("width");
   const heightInput = document.getElementById("height");
   const colorModeInput = document.getElementById("color-mode");
-  const inputs = [thresholdInput, symbolSetInput, colorModeInput];
+  // const bwThresholdInput = document.getElementById("bw-threshold");
+  const inputs = [
+    thresholdInput,
+    symbolSetInput,
+    colorModeInput,
+    // bwThresholdInput
+  ];
 
   const logError = (error) => {
     errorLog.innerHTML += error.message;
@@ -219,6 +225,7 @@ function initializeUi() {
           const threshold = thresholdInput.value;
           const symbolSet = getSymbolSet(symbolSetInput.value);
           const colorMode = colorModeInput.value;
+          // const bwThreshold = bwThresholdInput.value;
 
           output.innerHTML = getHtml({
             pixels,
@@ -226,6 +233,7 @@ function initializeUi() {
             threshold,
             symbolSet,
             colorMode,
+            // bwThreshold,
           });
         } catch (error) {
           return logError(error);
