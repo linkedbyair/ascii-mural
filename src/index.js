@@ -87,10 +87,10 @@ function getPixelHtml({ pixel, settings = {} }) {
   <span
     class='material-symbols-outlined shrink-0 flex justify-center items-center' 
     style="
-      width: ${iconSize || 12}px !important;
-      height: ${iconSize || 12}px !important;
-      display: flex !important;
-      font-size: ${fontSize}px !important;
+      width: ${iconSize || 12}px;
+      height: ${iconSize || 12}px;
+      display: flex;
+      font-size: ${fontSize}px;
       background-color: ${backgroundColor};
       color: ${textColor};
       font-variation-settings: 'wght' ${
@@ -98,16 +98,6 @@ function getPixelHtml({ pixel, settings = {} }) {
       }, 'FILL_color' ${fillColor};
       border-radius: ${pixel.radius}
     "
-    data-pixel-style="${pixelStyle}"
-    data-symbol-style="${symbolStyle}"
-    data-color-mode="${colorMode}"
-    data-color="${pixel.color}"
-    data-color-affected="${colorFunction(pixel.color)}"
-    data-luminance="${pixel.luminance}"
-    data-weight="${pixel.weight}"
-    data-radius="${pixel.radius}"
-    data-threshold="${threshold}"
-    data-character="${symbol.index}"
   >
     ${showText ? symbol.text : ""}
   </span>`;
