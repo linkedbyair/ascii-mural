@@ -1,4 +1,4 @@
-import { clocks, communication, maps, social, social2, weather } from "./icon-sets";
+import * as symbolSets from "./icon-sets";
 import { COLOR_MODES, WEIGHTS } from "./constants.js";
 import { colorModes } from "./color-modes/index.js";
 
@@ -143,6 +143,12 @@ function initializeUi() {
     iconSizeInput,
   ];
 
+  // Populate symbol set dropdown
+  symbolSetInput.innerHTML = Object.keys(symbolSets).map((key) => (
+    `<option value="${key}">${key}</option>`
+  )).join("");
+
+
   const logError = (error) => {
     errorLog.innerHTML += error.message;
   };
@@ -152,20 +158,7 @@ function initializeUi() {
   };
 
   const getSymbolSet = (key) => {
-    switch (key) {
-      case "clocks":
-        return clocks;
-      case "communication":
-        return communication;
-      case "maps":
-        return maps;
-      case "social":
-        return social;
-      case "social2":
-        return social2;
-      default:
-        return weather;
-    }
+    return symbolSets[key];
   };
 
   const updateSizes = (image, event = {}) => {
