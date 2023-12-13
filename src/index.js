@@ -1,4 +1,4 @@
-import { clocks, communication, maps, social, weather } from "./icon-sets";
+import { clocks, communication, maps, social, social2, weather } from "./icon-sets";
 import { COLOR_MODES, WEIGHTS } from "./constants.js";
 import { colorModes } from "./color-modes/index.js";
 
@@ -75,11 +75,10 @@ function getPixelHtml({ pixel, settings = {} }) {
   const symbol = symbolSet.getSymbol(luminance);
   const colorFunction = colorModes[colorMode].bind(null, settings);
   const pixelStyle = luminance < threshold ? "dark" : "light";
-  const symbolStyle = luminance > threshold / 2 ? "fill" : "outline";
   const backgroundColor =
     pixelStyle === "light" ? settings.backgroundColor : colorFunction(pixel);
   const textColor = pixelStyle === "light" ? colorFunction(pixel) : settings.backgroundColor;
-  const fillColor = symbolStyle === "fill" ? 1 : 0;
+  const fillColor = symbol.filled ? 1 : 0;
   const showText = pixel.luminance !== 255;
   const fontSize = 3 / 4 * iconSize;
   let materialClassName;
@@ -104,7 +103,7 @@ function getPixelHtml({ pixel, settings = {} }) {
       color: ${textColor};
       font-variation-settings: 'wght' ${
         pixel.weight
-      }, 'FILL_color' ${fillColor};
+      }, 'FILL' ${fillColor};
       border-radius: ${pixel.radius}
     "
   >
@@ -162,6 +161,8 @@ function initializeUi() {
         return maps;
       case "social":
         return social;
+      case "social2":
+        return social2;
       default:
         return weather;
     }

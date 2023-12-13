@@ -1,19 +1,22 @@
 import * as htmlToImage from "html-to-image";
-import { clocks, weather, communication, maps, social } from "./icon-set-recipes";
+import { clocks, weather, communication, maps, social, social2, } from "./icon-set-recipes";
 
 function getIconHTML() {
-  return [clocks, weather, communication, maps, social]
+  return [clocks, weather, communication, maps, social, social2]
     .map((iconSet) => {
       const innerHTML = iconSet.symbols
         .map((symbol) => {
           let name;
           let style;
+          let filled;
           if (typeof symbol === "string") {
             name = symbol;
             style = "outlined";
+            filled = false;
           } else {
             name = symbol.name;
             style = symbol.style;
+            filled = symbol.filled;
           }
           return `<tr class="js-symbol" data-name="${name}" data-style="${style}">
             <td>
@@ -26,7 +29,7 @@ function getIconHTML() {
                 style="
                   background-color: white;
                   color: black;
-                  font-variation-settings: 'wght' 700, 'FILL_color' 1;
+                  font-variation-settings: 'wght' 700, 'FILL' ${filled ? 1 : 0};
                 "
               >
                 ${name}
