@@ -69,6 +69,7 @@ function getPixelHtml({ pixel, settings = {} }) {
     threshold = 128,
     symbolSet = communication,
     colorMode = METHODS[FULL_COLOR],
+    iconSize = 12
   } = settings;
   const { luminance } = pixel;
   const symbol = symbolSet.getSymbol(luminance);
@@ -83,8 +84,10 @@ function getPixelHtml({ pixel, settings = {} }) {
 
   return `
   <span
-    class='material-symbols-outlined shrink-0 flex justify-center items-center w-[12px] h-[12px]' 
+    class='material-symbols-outlined shrink-0 flex justify-center items-center' 
     style="
+      width: ${iconSize || 12}px !important;
+      height: ${iconSize || 12}px !important;
       display: flex !important;
       font-size: 9px !important;
       background-color: ${backgroundColor};
@@ -132,11 +135,13 @@ function initializeUi() {
   const heightInput = document.getElementById("height");
   const colorModeInput = document.getElementById("color-mode");
   const backgroundColorInput = document.getElementById("background-color");
+  const iconSizeInput = document.getElementById("icon-size");
   const inputs = [
     thresholdInput,
     symbolSetInput,
     colorModeInput,
     backgroundColorInput,
+    iconSizeInput,
   ];
 
   const logError = (error) => {
@@ -223,6 +228,7 @@ function initializeUi() {
           const symbolSet = getSymbolSet(symbolSetInput.value);
           const colorMode = colorModeInput.value;
           const backgroundColor = backgroundColorInput.value;
+          const iconSize = iconSizeInput.value;
 
           output.innerHTML = getHtml({
             pixels,
@@ -230,7 +236,8 @@ function initializeUi() {
             threshold,
             symbolSet,
             colorMode,
-            backgroundColor
+            backgroundColor,
+            iconSize
           });
           output.style.backgroundColor = backgroundColor;
         } catch (error) {

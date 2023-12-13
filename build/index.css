@@ -608,6 +608,10 @@ video {
   width: 24px;
 }
 
+.w-1\/2 {
+  width: 50%;
+}
+
 .max-w-full {
   max-width: 100%;
 }
