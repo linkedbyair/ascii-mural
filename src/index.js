@@ -1,4 +1,4 @@
-import { communication, maps, social, weather } from "./icon-sets";
+import { clocks, communication, maps, social, weather } from "./icon-sets";
 import { COLOR_MODES, WEIGHTS } from "./constants.js";
 import { colorModes } from "./color-modes/index.js";
 
@@ -82,10 +82,19 @@ function getPixelHtml({ pixel, settings = {} }) {
   const fillColor = symbolStyle === "fill" ? 1 : 0;
   const showText = pixel.luminance !== 255;
   const fontSize = 3 / 4 * iconSize;
+  let materialClassName;
+  switch(symbol.style) {
+    case "sharp":
+      materialClassName = "material-symbols-sharp";
+    case "round":
+      materialClassName = "material-symbols-round";
+    default:
+      materialClassName = "material-symbols-outlined";
+  }
 
   return `
   <span
-    class='material-symbols-outlined shrink-0 flex justify-center items-center' 
+    class='${materialClassName} shrink-0 flex justify-center items-center' 
     style="
       width: ${iconSize || 12}px;
       height: ${iconSize || 12}px;
@@ -99,7 +108,7 @@ function getPixelHtml({ pixel, settings = {} }) {
       border-radius: ${pixel.radius}
     "
   >
-    ${showText ? symbol.text : ""}
+    ${showText ? symbol.name : ""}
   </span>`;
 }
 
@@ -145,6 +154,8 @@ function initializeUi() {
 
   const getSymbolSet = (key) => {
     switch (key) {
+      case "clocks":
+        return clocks;
       case "communication":
         return communication;
       case "maps":
