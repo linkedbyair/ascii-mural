@@ -69,18 +69,15 @@ function getPixelHtml({ pixel, settings = {} }) {
     threshold = 128,
     symbolSet = communication,
     colorMode = METHODS[FULL_COLOR],
-    // bwThreshold = 128,
   } = settings;
   const { luminance } = pixel;
   const symbol = symbolSet.getSymbol(luminance);
   const colorFunction = colorModes[colorMode].bind(null, settings);
   const pixelStyle = luminance < threshold ? "dark" : "light";
   const symbolStyle = luminance > threshold / 2 ? "fill" : "outline";
-  // const backgroundColor =
-  //   pixelStyle === "light" ? "white" : colorFunction(pixel);
   const backgroundColor =
-    pixelStyle === "light" ? "white" : colorFunction(pixel);
-  const textColor = pixelStyle === "light" ? colorFunction(pixel) : "white";
+    pixelStyle === "light" ? settings.backgroundColor : colorFunction(pixel);
+  const textColor = pixelStyle === "light" ? colorFunction(pixel) : settings.backgroundColor;
   const fillColor = symbolStyle === "fill" ? 1 : 0;
   const showText = pixel.luminance !== 255;
 
@@ -134,12 +131,12 @@ function initializeUi() {
   const widthInput = document.getElementById("width");
   const heightInput = document.getElementById("height");
   const colorModeInput = document.getElementById("color-mode");
-  // const bwThresholdInput = document.getElementById("bw-threshold");
+  const backgroundColorInput = document.getElementById("background-color");
   const inputs = [
     thresholdInput,
     symbolSetInput,
     colorModeInput,
-    // bwThresholdInput
+    backgroundColorInput,
   ];
 
   const logError = (error) => {
@@ -225,7 +222,7 @@ function initializeUi() {
           const threshold = thresholdInput.value;
           const symbolSet = getSymbolSet(symbolSetInput.value);
           const colorMode = colorModeInput.value;
-          // const bwThreshold = bwThresholdInput.value;
+          const backgroundColor = backgroundColorInput.value;
 
           output.innerHTML = getHtml({
             pixels,
@@ -233,8 +230,9 @@ function initializeUi() {
             threshold,
             symbolSet,
             colorMode,
-            // bwThreshold,
+            backgroundColor
           });
+          output.style.backgroundColor = backgroundColor;
         } catch (error) {
           return logError(error);
         }
