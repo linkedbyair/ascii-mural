@@ -81,6 +81,7 @@ function getPixelHtml({ pixel, settings = {} }) {
   const textColor = pixelStyle === "light" ? colorFunction(pixel) : settings.backgroundColor;
   const fillColor = symbolStyle === "fill" ? 1 : 0;
   const showText = pixel.luminance !== 255;
+  const fontSize = 3 / 4 * iconSize;
 
   return `
   <span
@@ -89,7 +90,7 @@ function getPixelHtml({ pixel, settings = {} }) {
       width: ${iconSize || 12}px !important;
       height: ${iconSize || 12}px !important;
       display: flex !important;
-      font-size: 9px !important;
+      font-size: ${fontSize}px !important;
       background-color: ${backgroundColor};
       color: ${textColor};
       font-variation-settings: 'wght' ${
