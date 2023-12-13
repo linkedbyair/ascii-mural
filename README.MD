@@ -1,7 +1,3 @@
-# Known Issues
-
-- Generator will fail if you request an icon that doesn't exist in your downloaded Google Material Design Icons
-
 # Generating symbol sets
 
 ## Prerequisites 
@@ -24,6 +20,8 @@ You can download it from [GitHub](https://github.com/google/material-design-icon
 **1. Create a recipe**
 
 A recipe is an instruction file that declares what icons to use. It will be a file that exports a JavaScript object, with an entry for the symbol set's name, and an entry for the symbols you want to include. Each symbol is defined with its own object. 
+
+You can pick the icons you want to use from [this list](https://fonts.google.com/icons?icon.style=Outlined&icon.platform=web).
 
 Create a file at `./scripts/icon-set-recipes/<id>.js`
 
