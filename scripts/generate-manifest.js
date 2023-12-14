@@ -5,10 +5,11 @@ const { hideBin } = require("yargs/helpers");
 const argv = yargs(hideBin(process.argv)).argv;
 
 const recipes = require("./icon-set-recipes");
+const { toKebabCase } = require("./utilities");
 
 async function generateIndexFile({ recipes, options }) {
   const fileContents = recipes
-    .map(({ name }) => `export * from "./${name}.js"`)
+    .map(({ name }) => `export * from "./${toKebabCase(name)}.js"`)
     .join("\n");
   const filePath = path.resolve(options.outputDirectory, "index.js");
 
@@ -16,7 +17,11 @@ async function generateIndexFile({ recipes, options }) {
     console.log(`\n\nWould write index file to ${filePath}:\n${fileContents}`);
     return;
   } else {
-    return fs.writeFileSync(filePath, fileContents);
+    fs.writeFileSync(filePath, fileContents);
+    if (options.log) {
+      console.log(`\n\nWrote index file to ${filePath}`);
+    }
+    return;
   }
 }
 
@@ -30,7 +35,14 @@ function run() {
   const options = {
     outputDirectory: argv.outputDirectory,
     debug: debugMode,
+    log: argv.log,
   };
+
+  if (options.debug) {
+    console.log(`Would write symbol sets to ${options.outputDirectory}, but debug mode is activated.`);
+  } else if (options.log) {
+    console.log(`Writing symbol sets to ${options.outputDirectory}`);
+  }
 
   generateIndexFile({ recipes, options });
 }

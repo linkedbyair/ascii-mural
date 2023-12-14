@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "generate:icon-list": "node scripts/generate-icon-list.js",
+    "generate:recipe": "node scripts/generate-recipe.js --output-directory=./scripts/icon-set-recipes",
     "generate:symbol-sets": "node scripts/generate-symbol-sets.js --output-directory=./src/icon-sets",
     "generate:manifest": "node scripts/generate-manifest.js --output-directory=./src/icon-sets",
     "build:js": "esbuild src/index.js --bundle --minify --sourcemap --outfile=build/index.js",

@@ -6,11 +6,12 @@ const { hideBin } = require("yargs/helpers");
 const argv = yargs(hideBin(process.argv)).argv;
 
 const recipes = require("./icon-set-recipes");
+const { toHumanReadable, toKebabCase, toCamelCase } = require("./utilities");
 
 function getPathToImage({ options, symbol }) {
   const { iconDirectory } = options;
   const { name, filled = false } = symbol;
-  const fileName = filled ? `${name}_24px.svg` : `${name}_fill1_20px.svg`;
+  const fileName = filled ? `${name}_fill1_20px.svg` : `${name}_20px.svg`;
   return path.resolve(iconDirectory, name, "materialsymbolsoutlined", fileName);
 }
 
@@ -19,8 +20,16 @@ function getPathToImage({ options, symbol }) {
  convert path/to/file.png -colorspace gray -format "%[fx:100*mean]" info:
 */
 function getLuminanceFromImage({ symbol, options }) {
+  if (symbol.luminance) {
+    if (options.debug || options.log) {
+      console.log(
+        `Skipping luminance calculation for ${symbol.name}, already has value of ${symbol.luminance}`
+      );
+    }
+    return Promise.resolve(symbol);
+  }
   const { path } = symbol;
-  if (options.debug) {
+  if (options.debug || options.log) {
     console.log(`Getting luminance for ${symbol.name} at ${path}`);
   }
   return new Promise((resolve, reject) => {
@@ -28,18 +37,18 @@ function getLuminanceFromImage({ symbol, options }) {
       [path, "-colorspace", "gray", "-format", '"%[fx:100*mean]"', "info:"],
       function (err, stdout) {
         if (err) {
-          if (options.debug) {
+          if (options.debug || options.log) {
             console.error(err);
           }
           reject(err);
         }
         const matches = stdout.match(/(\d+\.\d+)/);
         if (!matches || matches.length < 1) {
-          return reject(symbol.name)
-        };
-        const luminance = parseInt(matches[1], 10);
+          return reject(symbol.name);
+        }
+        const luminance = Math.round((parseFloat(matches[1], 10) / 100) * 255);
 
-        if (options.debug) {
+        if (options.debug || options.log) {
           console.log(`Luminance for ${symbol.name}: ${luminance}`);
         }
         resolve({
@@ -55,7 +64,7 @@ function scaleLuminanceValues({ recipe, symbols, options }) {
   const luminanceValues = symbols.map(({ luminance }) => luminance);
   const minimumValue = Math.min(...luminanceValues);
   const maxiumumValue = Math.max(...luminanceValues);
-  if (options.debug) {
+  if (options.debug || options.log) {
     console.log(
       `\nFor recipe "${recipe.name}"...\nMin. luminance: ${minimumValue}\nMax. luminance: ${maxiumumValue}`
     );
@@ -67,7 +76,6 @@ function scaleLuminanceValues({ recipe, symbols, options }) {
     ),
   }));
 }
-
 
 async function processRecipe({ options, recipe }) {
   // Filter out non-existant symbols, add paths to ones that do exist
@@ -88,12 +96,18 @@ async function processRecipe({ options, recipe }) {
   // const symbolsWithLuminance = await Promise.all(permittedSymbols.map(async (symbol) => {
   //   return await getLuminanceFromImage({ symbol, options });
   // }));
-  const luminanceResults = await Promise.allSettled(permittedSymbols.map(async (symbol) => {
-    return await getLuminanceFromImage({ symbol, options });
-  }));
-  const symbolsWithLuminance = luminanceResults.filter(({ status }) => status === "fulfilled").map(({ value }) => value);
-  const failedSymbols = luminanceResults.filter(({ status }) => status === "rejected").map(({ reason }) => reason);
-  console.log('Failed symbols', failedSymbols)
+  const luminanceResults = await Promise.allSettled(
+    permittedSymbols.map(async (symbol) => {
+      return await getLuminanceFromImage({ symbol, options });
+    })
+  );
+  const symbolsWithLuminance = luminanceResults
+    .filter(({ status }) => status === "fulfilled")
+    .map(({ value }) => value);
+  const failedSymbols = luminanceResults
+    .filter(({ status }) => status === "rejected")
+    .map(({ reason }) => reason);
+  console.log("Failed symbols", failedSymbols);
 
   // Remap the luminance values to a scale of 0-255
   const scaledSymbols = scaleLuminanceValues({
@@ -125,16 +139,16 @@ async function processRecipe({ options, recipe }) {
 }
 
 async function generateSymbolSetFile({ recipe, options }) {
-  if (options.debug) {
+  if (options.debug || options.log) {
     console.log(`\n\nProcessing recipe "${recipe.name}"...`);
   }
   const { results, processedRecipe } = await processRecipe({ recipe, options });
   const { name, symbols } = processedRecipe;
-  const outputPath = path.resolve(options.outputDirectory, `${name}.js`);
+  const outputPath = path.resolve(options.outputDirectory, `${toKebabCase(name)}.js`);
   const fileContents = `
 import { SymbolSet } from "./symbol-set.js";
 
-export const ${name} = new SymbolSet("${name}", [
+export const ${toCamelCase(name)} = new SymbolSet("${toHumanReadable(name)}", [
   ${symbols
     .map(
       (symbol) =>
@@ -146,13 +160,16 @@ export const ${name} = new SymbolSet("${name}", [
 ]);
 `.trimStart();
 
-  if (!options.debug) {
-    fs.writeFileSync(outputPath, fileContents);
-  } else {
+  if (options.debug) {
     console.log(`\n\nWould create file at ${outputPath}:\n${fileContents}`);
+  } else {
+    fs.writeFileSync(outputPath, fileContents);
+    if (options.log) {
+      console.log(
+        `\n\nCreated file at ${outputPath}\n${JSON.stringify(results, null, 2)}`
+      );
+    }
   }
-
-  console.log(JSON.stringify(results, null, 2));
 
   return results;
 }
@@ -182,14 +199,24 @@ function run() {
     throw new Error("No recipes to use.");
   }
 
-  const debugMode = argv.debug;
-
   const options = {
     outputDirectory: argv.outputDirectory,
     iconDirectory: argv.iconDirectory,
     recipes: recipesToUse,
-    debug: debugMode,
+    debug: argv.debug,
+    log: argv.log,
   };
+
+  if (options.debug) {
+    console.log(`DEBUG MODE IS ACTIVATED. NO FILES WILL BE SAVED.`);
+  }
+  if (options.debug || options.log) {
+    console.log(
+      `Creating symbol sets for the following recipes: ${recipesToUse
+        .map(({ name }) => name)
+        .join(", ")}}. Recipe will be generated at ${options.outputDirectory}`
+    );
+  }
 
   const results = options.recipes.map((recipe) =>
     generateSymbolSetFile({ recipe, options })
