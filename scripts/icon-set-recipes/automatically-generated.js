@@ -1,5 +1,5 @@
 module.exports = {
-  id: "automatic",
+  id: "automaticallyGenerated",
   name: "Automatically Generated",
   symbols: [
   {

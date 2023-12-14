@@ -195,9 +195,16 @@ function run() {
 
   let recipesToUse = recipes;
   if (argv.recipes) {
-    const recipeNames = argv.recipes.split(",");
-    recipesToUse = recipesToUse.filter(({ name }) =>
-      recipeNames.includes(name)
+    const namesToCheck = argv.recipes.split(",").map((name) => (
+      [
+        name.trim(),
+        toKebabCase(name.trim()),
+        toCamelCase(name.trim()),
+        toHumanReadable(name.trim()),
+      ]
+    )).flat();
+    recipesToUse = recipes.filter(({ id, name }) =>
+      namesToCheck.includes(name) || namesToCheck.includes(id)
     );
   }
 

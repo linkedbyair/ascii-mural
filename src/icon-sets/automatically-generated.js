@@ -1,7 +1,7 @@
 import { SymbolSet } from "./symbol-set.js";
 
-export const automatic = new SymbolSet(
-  "automatic",
+export const automaticallyGenerated = new SymbolSet(
+  "automaticallyGenerated",
   "Automatically Generated",
   [
   { name: "repeat_on", luminance: 0, filled: "false" },
