@@ -110,6 +110,8 @@ Note that this command only generates a recipe. You will need to the [generate t
 
 A recipe is an instruction file that declares what icons to use. It will be a file that exports a JavaScript object, with an entry for the symbol set's name, and an entry for the symbols you want to include. Each symbol is defined with its own object. 
 
+You can pick the icons you want to use from [this list](https://fonts.google.com/icons?icon.style=Outlined&icon.platform=web).
+
 Create a file at `./scripts/icon-set-recipes/<id>.js`
 
 ```js
