@@ -1,6 +1,9 @@
 import { SymbolSet } from "./symbol-set.js";
 
-export const maps = new SymbolSet("Maps", [
+export const maps = new SymbolSet(
+  "maps",
+  "Maps",
+  [
   { name: "set_meal", luminance: 0, filled: "false" },
   { name: "subway", luminance: 9, filled: "false" },
   { name: "streetview", luminance: 13, filled: "false" },

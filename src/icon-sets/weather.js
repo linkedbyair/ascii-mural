@@ -1,6 +1,9 @@
 import { SymbolSet } from "./symbol-set.js";
 
-export const weather = new SymbolSet("Weather", [
+export const weather = new SymbolSet(
+  "weather",
+  "Weather",
+  [
   { name: "landslide", luminance: 0, filled: "false" },
   { name: "flood", luminance: 48, filled: "false" },
   { name: "cyclone", luminance: 54, filled: "false" },

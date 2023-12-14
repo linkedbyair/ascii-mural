@@ -1,6 +1,9 @@
 import { SymbolSet } from "./symbol-set.js";
 
-export const communication = new SymbolSet("Communication", [
+export const communication = new SymbolSet(
+  "communication",
+  "Communication",
+  [
   { name: "contacts", luminance: 0, filled: "false" },
   { name: "contact_mail", luminance: 10, filled: "false" },
   { name: "contact_phone", luminance: 13, filled: "false" },

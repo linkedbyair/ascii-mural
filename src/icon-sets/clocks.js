@@ -1,6 +1,9 @@
 import { SymbolSet } from "./symbol-set.js";
 
-export const clocks = new SymbolSet("Clocks", [
+export const clocks = new SymbolSet(
+  "clocks",
+  "Clocks",
+  [
   { name: "clock_loader_90", luminance: 0, filled: "false" },
   { name: "clock_loader_60", luminance: 70, filled: "false" },
   { name: "clock_loader_40", luminance: 140, filled: "false" },

@@ -1,5 +1,6 @@
 module.exports = {
-  name: "social2",
+  id: "social2",
+  name: "Social (2)",
   symbols: [
     { name: "sentiment_calm", style: "outline", filled: true },
     { name: "groups_2", style: "outline", filled: true },

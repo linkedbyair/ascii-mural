@@ -1,5 +1,6 @@
 module.exports = {
-  name: "weather",
+  id: "weather",
+  name: "Weather",
   symbols: [
     { name: "ac_unit", filled: false }, 
     { name: "severe_cold", filled: false }, 

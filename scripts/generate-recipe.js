@@ -2,7 +2,7 @@ const path = require("path");
 const fs = require("fs");
 const yargs = require("yargs/yargs");
 const { hideBin } = require("yargs/helpers");
-const { parameterize, toHumanReadable, toKebabCase } = require("./utilities");
+const { toCamelCase, toHumanReadable, toKebabCase } = require("./utilities");
 const argv = yargs(hideBin(process.argv)).argv;
 
 async function run() {
@@ -77,6 +77,7 @@ async function run() {
 
   const fileContents = `
 module.exports = {
+  id: "${toCamelCase(options.name)}",
   name: "${toHumanReadable(options.name)}",
   symbols: ${JSON.stringify(processedSymbols, null, 2)}
 }

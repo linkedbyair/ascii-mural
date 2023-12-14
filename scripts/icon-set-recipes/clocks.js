@@ -1,5 +1,6 @@
 module.exports = {
-  name: "clocks",
+  id: "clocks",
+  name: "Clocks",
   symbols: [
     { name: 'lens', filled: false },
     { name: 'clock_loader_10', filled: false },

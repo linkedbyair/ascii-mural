@@ -1,5 +1,6 @@
 module.exports = {
-  name: "communication", 
+  id: "communication",
+  name: "Communication",
   symbols: [
     { name: "call_made", filled: false }, 
     { name: "call_received", filled: false }, 

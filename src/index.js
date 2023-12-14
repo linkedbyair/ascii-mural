@@ -144,8 +144,8 @@ function initializeUi() {
   ];
 
   // Populate symbol set dropdown
-  symbolSetInput.innerHTML = Object.keys(symbolSets).map((key) => (
-    `<option value="${key}">${key}</option>`
+  symbolSetInput.innerHTML = Object.values(symbolSets).map(({ id, name }) => (
+    `<option value="${id}">${name}</option>`
   )).join("");
 
 

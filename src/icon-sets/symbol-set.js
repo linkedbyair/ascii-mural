@@ -1,5 +1,6 @@
 export class SymbolSet {
-  constructor(name, symbols) {
+  constructor(id, name, symbols) {
+    this.id = id;
     this.name = name;
     this.symbols = symbols;
   }

@@ -1,6 +1,9 @@
 import { SymbolSet } from "./symbol-set.js";
 
-export const automaticallyGenerated = new SymbolSet("Automatically Generated", [
+export const automatic = new SymbolSet(
+  "automatic",
+  "Automatically Generated",
+  [
   { name: "repeat_on", luminance: 0, filled: "false" },
   { name: "font_download", luminance: 37, filled: "true" },
   { name: "attach_email", luminance: 64, filled: "true" },

@@ -1,5 +1,6 @@
 module.exports = {
-  name: "maps",
+  id: "maps",
+  name: "Maps",
   symbols: [
     { name: "connecting_airports", filled: false },
     { name: "alt_route", filled: false },

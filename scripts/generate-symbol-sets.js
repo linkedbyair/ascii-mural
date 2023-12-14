@@ -143,12 +143,18 @@ async function generateSymbolSetFile({ recipe, options }) {
     console.log(`\n\nProcessing recipe "${recipe.name}"...`);
   }
   const { results, processedRecipe } = await processRecipe({ recipe, options });
-  const { name, symbols } = processedRecipe;
-  const outputPath = path.resolve(options.outputDirectory, `${toKebabCase(name)}.js`);
+  const { id, name, symbols } = processedRecipe;
+  const outputPath = path.resolve(
+    options.outputDirectory,
+    `${toKebabCase(name)}.js`
+  );
   const fileContents = `
 import { SymbolSet } from "./symbol-set.js";
 
-export const ${toCamelCase(name)} = new SymbolSet("${toHumanReadable(name)}", [
+export const ${id || toCamelCase(name)} = new SymbolSet(
+  "${id || toCamelCase(name)}",
+  "${toHumanReadable(name)}",
+  [
   ${symbols
     .map(
       (symbol) =>

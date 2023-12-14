@@ -1,20 +1,29 @@
 module.exports = {
   toKebabCase: function toKebabCase(string) {
-    // First replace camelCase with snake_case
-    // Then replace snake_case with kebab-case
     return string
+      .replace(/\s+/g, "-")
+      // Strip out any characters that aren't alphanumeric, hyphens, or underscores
+      .replace(/[^a-zA-Z0-9\-\_]/g, "")
+      // Replace camelCase with snake_case
       .replace(/([a-z])([A-Z])/g, "$1_$2")
+      // Replace snake_case with kebab-case
       .replace(/[_\s]/g, "-")
+      // Make everything lowercase
       .toLowerCase();
   },
 
-  toCamelCase: function parameterize(string) {
+  toCamelCase: function toCamelCase(string) {
     // First replace kebab-case with snake_case
     // Then replace snake_case with camelCase
     return string
+      // Strip out any characters that aren't alphanumeric, hyphens, or underscores
+      .replace(/[^a-zA-Z0-9\-\_\s]/g, "")
+      // Replace kebab-case with snake_case
       .replace(/[-\s]/g, "_")
+      // Make everything lowercase
       .toLowerCase()
-      .replace(/_([a-z])/g, (match, letter) => letter.toUpperCase());
+      // Replace snake_case with camelCase
+      .replace(/_([a-z0-9])/g, (match, letter) => letter.toUpperCase());
   },
 
   toHumanReadable: function toHumanReadable(string) {

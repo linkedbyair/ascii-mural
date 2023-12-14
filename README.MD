@@ -95,7 +95,7 @@ Usually the recipe is handcrafted, so that you use the icons you specifically wa
 Note that you must have an up-to-date `./scripts/icon-list.json` to run this script. [See instructions here.](#getting-a-list-of-icons-by-luminance-values) A main list is commited to git, though, so you don't necessarily have to do this.
 
 ```sh
-yarn generate:recipe --icon-directory=/path/to/material-design-icons-master/symbols/web --name="your-recipe-name" --size="number-of-symbols-in-recipe"
+yarn generate:recipe --icon-directory=/path/to/material-design-icons-master/symbols/web --name="Your Recipe Name" --size="number-of-symbols-in-recipe"
 ```
 
 You can optionally pass in a `--input` argument to specify a custom list of icons. This may be useful if you are looking to omit certain icons.
@@ -116,7 +116,8 @@ Create a file at `./scripts/icon-set-recipes/<id>.js`
 
 ```js
 module.exports = {
-  name: "name_of_your_symbol_set",
+  id: "nameOfYourSymbolSet",
+  name: "Name of Your Symbol Set",
   symbols: [
     // If you want to use the "filled" variant of the icon, declare that with the `filled` key
     { name: 'name_of_symbol', filled: true },

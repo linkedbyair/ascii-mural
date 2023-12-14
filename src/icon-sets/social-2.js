@@ -1,6 +1,9 @@
 import { SymbolSet } from "./symbol-set.js";
 
-export const social2 = new SymbolSet("Social2", [
+export const social2 = new SymbolSet(
+  "social2",
+  "Social (2)",
+  [
   { name: "face_2", luminance: 0, filled: "false" },
   { name: "sentiment_calm", luminance: 45, filled: "true" },
   { name: "globe", luminance: 78, filled: "true" },
