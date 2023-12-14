@@ -49,14 +49,12 @@ function getPixelData({ image, size }) {
       // Photometric/digital ITU BT.709 http://www.itu.int/rec/R-REC-BT.709
       const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
       const color = `rgb(${red}, ${green}, ${blue})`;
-      const radius = Math.floor((luminance / 255) * 50) + "%";
       return {
         red,
         green,
         blue,
         luminance,
         color,
-        radius,
       };
     });
 }
@@ -83,6 +81,10 @@ function getPixelHtml({ pixel, settings = {} }) {
     pixelStyle === "light"
       ? WEIGHTS[Math.floor((luminance / 255) * (WEIGHTS.length - 1))]
       : WEIGHTS[Math.floor(((255 - luminance) / 255) * (WEIGHTS.length - 1))];
+  const borderRadius =
+    pixelStyle === "light"
+      ? Math.floor(((255 - luminance) / 255) * 50) + "%"
+      : Math.floor((luminance / 255) * 50) + "%";
   let materialClassName;
   switch (symbol.style) {
     case "sharp":
@@ -104,7 +106,7 @@ function getPixelHtml({ pixel, settings = {} }) {
       background-color: ${backgroundColor};
       color: ${textColor};
       font-variation-settings: 'wght' ${weight}, 'FILL' ${fillColor};
-      border-radius: ${pixel.radius}
+      border-radius: ${borderRadius}
     "
   >
     ${showText ? symbol.name : ""}
