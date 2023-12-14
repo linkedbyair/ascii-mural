@@ -5,10 +5,15 @@ export class SymbolSet {
     this.symbols = symbols;
   }
 
-  getSymbol(luminance) {
+  getSymbol(luminance, threshold) {
     return this.symbols
       .map((symbol) => {
-        symbol.delta = Math.abs(symbol.luminance - luminance);
+        // If the luminance is less than the threshold, it will be rendered
+        // as light icon on a dark background. Therefore, the luminance of
+        // the symbol needs to be inverted.
+        const styledLuminance =
+          luminance < threshold ? 255 - symbol.luminance : symbol.luminance;
+        symbol.delta = Math.abs(styledLuminance - luminance);
         return symbol;
       })
       .sort((a, b) => a.delta - b.delta)[0];

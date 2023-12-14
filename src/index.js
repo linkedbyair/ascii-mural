@@ -72,7 +72,7 @@ function getPixelHtml({ pixel, settings = {} }) {
     iconSize = 12
   } = settings;
   const { luminance } = pixel;
-  const symbol = symbolSet.getSymbol(luminance);
+  const symbol = symbolSet.getSymbol(luminance, threshold);
   const colorFunction = colorModes[colorMode].bind(null, settings);
   const pixelStyle = luminance < threshold ? "dark" : "light";
   const backgroundColor =
@@ -220,7 +220,7 @@ function initializeUi() {
 
       const handleSettingChange = () => {
         try {
-          const threshold = thresholdInput.value;
+          const threshold = parseInt(thresholdInput.value, 10);
           const symbolSet = getSymbolSet(symbolSetInput.value);
           const colorMode = colorModeInput.value;
           const backgroundColor = backgroundColorInput.value;
