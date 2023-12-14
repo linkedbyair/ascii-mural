@@ -49,8 +49,6 @@ function getPixelData({ image, size }) {
       // Photometric/digital ITU BT.709 http://www.itu.int/rec/R-REC-BT.709
       const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
       const color = `rgb(${red}, ${green}, ${blue})`;
-      const weight =
-        WEIGHTS[Math.floor((luminance / 255) * (WEIGHTS.length - 1))];
       const radius = Math.floor((luminance / 255) * 50) + "%";
       return {
         red,
@@ -58,7 +56,6 @@ function getPixelData({ image, size }) {
         blue,
         luminance,
         color,
-        weight,
         radius,
       };
     });
@@ -69,7 +66,7 @@ function getPixelHtml({ pixel, settings = {} }) {
     threshold = 128,
     symbolSet = communication,
     colorMode = METHODS[FULL_COLOR],
-    iconSize = 12
+    iconSize = 12,
   } = settings;
   const { luminance } = pixel;
   const symbol = symbolSet.getSymbol(luminance, threshold);
@@ -77,12 +74,17 @@ function getPixelHtml({ pixel, settings = {} }) {
   const pixelStyle = luminance < threshold ? "dark" : "light";
   const backgroundColor =
     pixelStyle === "light" ? settings.backgroundColor : colorFunction(pixel);
-  const textColor = pixelStyle === "light" ? colorFunction(pixel) : settings.backgroundColor;
+  const textColor =
+    pixelStyle === "light" ? colorFunction(pixel) : settings.backgroundColor;
   const fillColor = symbol.filled ? 1 : 0;
   const showText = pixel.luminance !== 255;
-  const fontSize = 3 / 4 * iconSize;
+  const fontSize = (3 / 4) * iconSize;
+  const weight =
+    pixelStyle === "light"
+      ? WEIGHTS[Math.floor((luminance / 255) * (WEIGHTS.length - 1))]
+      : WEIGHTS[Math.floor(((255 - luminance) / 255) * (WEIGHTS.length - 1))];
   let materialClassName;
-  switch(symbol.style) {
+  switch (symbol.style) {
     case "sharp":
       materialClassName = "material-symbols-sharp";
     case "round":
@@ -101,9 +103,7 @@ function getPixelHtml({ pixel, settings = {} }) {
       font-size: ${fontSize}px;
       background-color: ${backgroundColor};
       color: ${textColor};
-      font-variation-settings: 'wght' ${
-        pixel.weight
-      }, 'FILL' ${fillColor};
+      font-variation-settings: 'wght' ${weight}, 'FILL' ${fillColor};
       border-radius: ${pixel.radius}
     "
   >
@@ -144,10 +144,9 @@ function initializeUi() {
   ];
 
   // Populate symbol set dropdown
-  symbolSetInput.innerHTML = Object.values(symbolSets).map(({ id, name }) => (
-    `<option value="${id}">${name}</option>`
-  )).join("");
-
+  symbolSetInput.innerHTML = Object.values(symbolSets)
+    .map(({ id, name }) => `<option value="${id}">${name}</option>`)
+    .join("");
 
   const logError = (error) => {
     errorLog.innerHTML += error.message;
@@ -233,7 +232,7 @@ function initializeUi() {
             symbolSet,
             colorMode,
             backgroundColor,
-            iconSize
+            iconSize,
           });
           output.style.backgroundColor = backgroundColor;
         } catch (error) {
