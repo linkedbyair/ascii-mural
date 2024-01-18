@@ -76,9 +76,16 @@ This is only necessary if you are making changes to the code.
 yarn start
 ```
 
+# Terminology
+
+* Symbol (aka icon): a particular icon in google's material design icon library, in a particular style (filled or outlined)
+* Symbol Set: a JavaScript file that describes which icons to use when rendering an image. The file contains an array of object, each describing the icon, its style, and its luminance value. Symbol sets have a function to pick a specific icon given a luminance value & set of settings.
+* Recipe: an JavaScript file that is used to generate a SymbolSet. It contains a list of icons you want to use. When a recipe is processed, a program analyzes the requested icons and finds luminance values. Then it generates a symbol set file.
+
+
 # Getting a list of icons by luminance values
 
-If you are going to generate a recipe, you will need to know the luminance values for each icon. This repository contains a script that will generate a JSON file with that information.
+If you are going to generate a recipe, you will need to know the luminance values for each icon. This repository contains a script that will generate a JSON file with that information. [A version of this file is included in this repository](https://github.com/linkedbyair/ascii-mural/blob/857bda6d8cac4aa9bd8d6aea81c8be60561bba29/scripts/icon-list.json), but you can regenerate it whenever you want.
 
 ```sh
 yarn generate:icon-list --icon-directory=/path/to/material-design-icons-master/symbols/web
@@ -86,9 +93,22 @@ yarn generate:icon-list --icon-directory=/path/to/material-design-icons-master/s
 
 You can optionally supply a `--debug` argument to see what's happening.
 
-# Generating a recipe
+# Writing a recipe
 
-A recipe is an instruction file that declares what icons to use. It will be a file that exports a JavaScript object, with an entry for the symbol set's name, and an entry for the symbols you want to include. Each symbol is defined with its own object.
+Create a file at `scripts/icon-set-recipes/lowercase-recipe-name.js`. Use the code sample below as the basis of this file.
+
+```js
+module.exports = {
+  id: "lowercase-recipe-name",
+  name: "Title Case Recipe Name",
+  symbols: [
+    { name: "icon_name", filled: false }, 
+    { name: "icon_name", filled: false },  
+  ],
+};
+```
+
+# Generating a recipe
 
 Usually the recipe is handcrafted, so that you use the icons you specifically want. However, in the event that you only care about luminance values, this repository includes a script that will generate a recipe based solely on a (roughly) even distribution of luminance values.
 
@@ -99,6 +119,10 @@ yarn generate:recipe --icon-directory=/path/to/material-design-icons-master/symb
 ```
 
 You can optionally pass in a `--input` argument to specify a custom list of icons. This may be useful if you are looking to omit certain icons.
+
+```sh
+yarn generate:recipe --icon-directory=/path/to/material-design-icons-master/symbols/web --name="Your Recipe Name" --size="number-of-symbols-in-recipe" --input=/path/to/list-of-icons.json
+```
 
 Note that this command only generates a recipe. You will need to the [generate the symbol set](#generating-symbol-sets-from-recipes) and [the manifest](#generating-the-symbol-set-manifest) to get the web-based tool to show it as an option.
 
@@ -146,6 +170,12 @@ A single file exports all of the available symbol sets for the tool to use. This
 
 ```sh
 yarn generate:manifest
+```
+
+**4. Re-build this app's javascript
+
+```sh
+yarn build
 ```
 
 # Generating the symbol set manifest 
