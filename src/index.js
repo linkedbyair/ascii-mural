@@ -2,6 +2,8 @@ import * as symbolSets from "./icon-sets";
 import { COLOR_MODES, WEIGHTS } from "./constants.js";
 import { colorModes } from "./color-modes/index.js";
 
+const OUTPUT_RESOLUTION = 150; // DPI
+
 function loadImage(file) {
   return new Promise((resolve, reject) => {
     const image = new Image();
@@ -17,17 +19,13 @@ function loadImage(file) {
   });
 }
 
-function getPixelData({ image, size }) {
-  size ||= {};
-  size.width ||= image.width;
-  size.height ||= image.height;
-
+function getPixelData({ image }) {
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
-  canvas.width = size.width;
-  canvas.height = size.height;
-  context.drawImage(image, 0, 0, size.width, size.height);
-  const imageData = context.getImageData(0, 0, size.width, size.height);
+  canvas.width = image.width;
+  canvas.height = image.height;
+  context.drawImage(image, 0, 0, image.width, image.height);
+  const imageData = context.getImageData(0, 0, image.width, image.height);
   if (!imageData || !imageData.data) {
     throw new Error("Could not get image data");
   }
@@ -60,14 +58,19 @@ function getPixelData({ image, size }) {
     });
 }
 
-function getPixelHtml({ pixel, position, settings = {} }) {
+function getPixelHtml({ pixel, position, image, settings = {} }) {
   const {
     threshold = 128,
     symbolSet = communication,
-    colorMode = METHODS[FULL_COLOR],
-    iconSize = 12,
+    colorMode = METHODS[COLOR_MODES.FULL_COLOR],
     isCheckered = false,
+    size,
   } = settings;
+
+  if (typeof pixel === "undefined" || typeof pixel.alpha === "undefined") {
+    debugger;
+  }
+  const iconSize = (size.width / image.width) * OUTPUT_RESOLUTION;
 
   if (
     (isCheckered && (position.row % 2 !== 0) ^ (position.column % 2 !== 0)) ||
@@ -77,45 +80,36 @@ function getPixelHtml({ pixel, position, settings = {} }) {
     <span
       class='shrink-0 flex justify-center items-center' 
       style="
-        width: ${iconSize || 12}px;
-        height: ${iconSize || 12}px;
+        width: ${iconSize}px;
+        height: ${iconSize}px;
       "
     ></span>
     `;
   }
 
-  const { luminance } = pixel;
-  const symbol = symbolSet.getSymbol(luminance, threshold);
+  const symbol = symbolSet.getSymbol({ pixel, settings });
   const colorFunction = colorModes[colorMode].bind(null, settings);
-  const pixelStyle = luminance < threshold ? "dark" : "light";
+  const pixelStyle = pixel.luminance < threshold ? "dark" : "light";
   const backgroundColor =
     pixelStyle === "light" ? settings.backgroundColor : colorFunction(pixel);
   const textColor =
     pixelStyle === "light" ? colorFunction(pixel) : settings.backgroundColor;
   const fillColor = symbol.filled ? 1 : 0;
-
   const showText = pixel.luminance !== 255;
   const fontSize = (3 / 4) * iconSize;
   const weight =
     pixelStyle === "light"
-      ? WEIGHTS[Math.floor((luminance / 255) * (WEIGHTS.length - 1))]
-      : WEIGHTS[Math.floor(((255 - luminance) / 255) * (WEIGHTS.length - 1))];
-  let materialClassName;
-  switch (symbol.style) {
-    case "sharp":
-      materialClassName = "material-symbols-sharp";
-    case "round":
-      materialClassName = "material-symbols-round";
-    default:
-      materialClassName = "material-symbols-outlined";
-  }
+      ? WEIGHTS[Math.floor((pixel.luminance / 255) * (WEIGHTS.length - 1))]
+      : WEIGHTS[
+          Math.floor(((255 - pixel.luminance) / 255) * (WEIGHTS.length - 1))
+        ];
 
   return `
   <span
-    class='${materialClassName} shrink-0 flex justify-center items-center' 
+    class='material-symbols-outlined shrink-0 flex justify-center items-center' 
     style="
-      width: ${iconSize || 12}px;
-      height: ${iconSize || 12}px;
+      width: ${iconSize}px;
+      height: ${iconSize}px;
       display: flex;
       font-size: ${fontSize}px;
       background-color: ${backgroundColor};
@@ -127,21 +121,24 @@ function getPixelHtml({ pixel, position, settings = {} }) {
   </span>`;
 }
 
-function getHtml({ pixels, size, ...props }) {
-  return Array.from({ length: size.height })
+function getHtml({ pixels, image, ...settings }) {
+  return Array.from({ length: image.height })
     .map((_, rowIndex) => {
-      const inner = Array.from({ length: size.width }).map((_, columnIndex) => {
-        const pixelIndex = rowIndex * size.width + columnIndex;
-        return getPixelHtml({
-          pixel: pixels[pixelIndex],
-          position: {
-            row: rowIndex,
-            column: columnIndex,
-            pixel: pixelIndex,
-          },
-          settings: props,
-        });
-      });
+      const inner = Array.from({ length: image.width }).map(
+        (_, columnIndex) => {
+          const pixelIndex = rowIndex * image.width + columnIndex;
+          return getPixelHtml({
+            image,
+            settings,
+            pixel: pixels[pixelIndex],
+            position: {
+              row: rowIndex,
+              column: columnIndex,
+              pixel: pixelIndex,
+            },
+          });
+        }
+      );
       return `<div class="flex flex-row no-wrap">${inner.join("")}</div>`;
     })
     .join("");
@@ -153,19 +150,16 @@ function initializeUi() {
   const symbolSetInput = document.getElementById("symbol-set");
   const output = document.getElementById("output");
   const errorLog = document.getElementById("errors");
-  const clearErrorsButton = document.getElementById("clear-errors");
   const widthInput = document.getElementById("width");
   const heightInput = document.getElementById("height");
   const colorModeInput = document.getElementById("color-mode");
   const backgroundColorInput = document.getElementById("background-color");
-  const iconSizeInput = document.getElementById("icon-size");
   const checkedPatternInput = document.getElementById("checkered-pattern");
   const inputs = [
     thresholdInput,
     symbolSetInput,
     colorModeInput,
     backgroundColorInput,
-    iconSizeInput,
     checkedPatternInput,
   ];
 
@@ -174,20 +168,15 @@ function initializeUi() {
     .map(({ id, name }) => `<option value="${id}">${name}</option>`)
     .join("");
 
-  const logError = (error) => {
-    errorLog.innerHTML += error.message;
-  };
-
-  const clearErrors = () => {
-    errorLog.innerHTML = "";
-  };
-
   const getSymbolSet = (key) => {
     return symbolSets[key];
   };
 
-  const updateSizes = (image, event = {}) => {
-    if (event.target && event.target === heightInput) {
+  const updateSizes = (image, event) => {
+    if (!event) {
+      widthInput.value = 1;
+      heightInput.value = Math.floor(image.height / image.width);;
+    } else if (event.target && event.target === heightInput) {
       const height = parseInt(heightInput.value, 10);
       const width = Math.floor(height * (image.width / image.height));
       if (widthInput.value !== width) {
@@ -229,19 +218,16 @@ function initializeUi() {
       image = await loadImage(imageInput.files[0]);
     } catch (error) {
       console.error(error);
-      return logError(error);
     }
 
-    updateSizes(image, { target: widthInput });
+    updateSizes(image);
+    const pixels = getPixelData({ image });
+    console.log(pixels)
 
     const handleSizeChange = (e) => {
       unlistenSecondaryEvents();
       updateSizes(image, e);
       const size = readSizes();
-      const pixels = getPixelData({
-        image,
-        size,
-      });
 
       const handleSettingChange = () => {
         try {
@@ -249,22 +235,21 @@ function initializeUi() {
           const symbolSet = getSymbolSet(symbolSetInput.value);
           const colorMode = colorModeInput.value;
           const backgroundColor = backgroundColorInput.value;
-          const iconSize = iconSizeInput.value;
           const isCheckered = checkedPatternInput.checked;
 
           output.innerHTML = getHtml({
             pixels,
+            image,
             size,
             threshold,
             symbolSet,
             colorMode,
             backgroundColor,
-            iconSize,
             isCheckered,
           });
           output.style.backgroundColor = backgroundColor;
         } catch (error) {
-          return logError(error);
+          console.error(error);
         }
       };
 
@@ -289,7 +274,6 @@ function initializeUi() {
     handleSizeChange();
   };
 
-  clearErrorsButton.addEventListener("click", clearErrors);
   imageInput.addEventListener("change", handleImageChange);
 }
 

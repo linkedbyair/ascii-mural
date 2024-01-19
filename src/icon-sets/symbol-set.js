@@ -5,7 +5,9 @@ export class SymbolSet {
     this.symbols = symbols;
   }
 
-  getSymbol(luminance, threshold) {
+  getSymbol({pixel, settings}) {
+    const { luminance } = pixel;
+    const { threshold } = settings;
     return this.symbols
       .map((symbol) => {
         // If the luminance is less than the threshold, it will be rendered

@@ -26,8 +26,8 @@
           <div class="mb-4">
             <div class="flex gap-1">
               <label>
-                <span class="block text-xs mb-2">Resize width</span>
-                <input type="number" id="width" value="50" class="w-full p-2" />
+                <span class="block text-xs mb-2">Output width (inches)</span>
+                <input type="number" id="width" value="" class="w-full p-2" />
               </label>
               <label>
                 <span class="block text-xs mb-2">Height</span>
@@ -81,19 +81,6 @@
               <span class="block text-xs">Checkered pattern?</span>
             </label>
           </div>
-
-          <div class="mb-4">
-            <label>
-              <span class="block text-xs mb-2">Icon size</span>
-              <input type="number" id="icon-size" value="12" class="p-2" />
-            </label>
-          </div>
-        </div>
-        <div class="bg-red-200 text-red-700 p-4 md:grow md:shrink md:flex md:flex-col">
-          <h3 class="text-lg bold mb-4">Errors</h3>
-          <div id="errors" class="font-mono md:grow"></div>
-
-          <button id="clear-errors" class="bg-red-100 py-2 px-8 border-0 self-end">Clear</button>
         </div>
       </aside>
     </div>
