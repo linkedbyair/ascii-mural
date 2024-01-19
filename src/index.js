@@ -66,13 +66,11 @@ function getPixelHtml({ pixel, position, settings = {} }) {
     symbolSet = communication,
     colorMode = METHODS[FULL_COLOR],
     iconSize = 12,
-    checkedPatternSize = 0,
+    isCheckered = false,
   } = settings;
 
   if (
-    (checkedPatternSize &&
-      (position.row % (checkedPatternSize + 1) !== 0 ||
-        position.column % (checkedPatternSize + 1) !== 0)) ||
+    (isCheckered && (position.row % 2 !== 0) ^ (position.column % 2 !== 0)) ||
     Math.round(pixel.alpha / 255) === 0
   ) {
     return `
@@ -252,7 +250,7 @@ function initializeUi() {
           const colorMode = colorModeInput.value;
           const backgroundColor = backgroundColorInput.value;
           const iconSize = iconSizeInput.value;
-          const checkedPatternSize = parseInt(checkedPatternInput.value, 10);
+          const isCheckered = checkedPatternInput.checked;
 
           output.innerHTML = getHtml({
             pixels,
@@ -262,7 +260,7 @@ function initializeUi() {
             colorMode,
             backgroundColor,
             iconSize,
-            checkedPatternSize,
+            isCheckered,
           });
           output.style.backgroundColor = backgroundColor;
         } catch (error) {
