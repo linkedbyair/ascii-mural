@@ -59,13 +59,35 @@ function getPixelData({ image, size }) {
     });
 }
 
-function getPixelHtml({ pixel, settings = {} }) {
+function getPixelHtml({ pixel, position, settings = {} }) {
   const {
     threshold = 128,
     symbolSet = communication,
     colorMode = METHODS[FULL_COLOR],
     iconSize = 12,
+    checkedPatternSize = 0,
   } = settings;
+
+  if (checkedPatternSize > 0) {
+
+    debugger;
+  }
+  if (
+    checkedPatternSize &&
+    (position.row % (checkedPatternSize + 1) !== 0 ||
+      position.column % (checkedPatternSize + 1) !== 0)
+  ) {
+    return `
+    <span
+      class='shrink-0 flex justify-center items-center' 
+      style="
+        width: ${iconSize || 12}px;
+        height: ${iconSize || 12}px;
+      "
+    ></span>
+    `;
+  }
+
   const { luminance } = pixel;
   const symbol = symbolSet.getSymbol(luminance, threshold);
   const colorFunction = colorModes[colorMode].bind(null, settings);
@@ -75,6 +97,7 @@ function getPixelHtml({ pixel, settings = {} }) {
   const textColor =
     pixelStyle === "light" ? colorFunction(pixel) : settings.backgroundColor;
   const fillColor = symbol.filled ? 1 : 0;
+
   const showText = pixel.luminance !== 255;
   const fontSize = (3 / 4) * iconSize;
   const weight =
@@ -118,7 +141,15 @@ function getHtml({ pixels, size, ...props }) {
     .map((_, rowIndex) => {
       const inner = Array.from({ length: size.width }).map((_, columnIndex) => {
         const pixelIndex = rowIndex * size.width + columnIndex;
-        return getPixelHtml({ pixel: pixels[pixelIndex], settings: props });
+        return getPixelHtml({
+          pixel: pixels[pixelIndex],
+          position: {
+            row: rowIndex,
+            column: columnIndex,
+            pixel: pixelIndex,
+          },
+          settings: props,
+        });
       });
       return `<div class="flex flex-row no-wrap">${inner.join("")}</div>`;
     })
@@ -137,12 +168,14 @@ function initializeUi() {
   const colorModeInput = document.getElementById("color-mode");
   const backgroundColorInput = document.getElementById("background-color");
   const iconSizeInput = document.getElementById("icon-size");
+  const checkedPatternInput = document.getElementById("checkered-pattern");
   const inputs = [
     thresholdInput,
     symbolSetInput,
     colorModeInput,
     backgroundColorInput,
     iconSizeInput,
+    checkedPatternInput,
   ];
 
   // Populate symbol set dropdown
@@ -226,6 +259,7 @@ function initializeUi() {
           const colorMode = colorModeInput.value;
           const backgroundColor = backgroundColorInput.value;
           const iconSize = iconSizeInput.value;
+          const checkedPatternSize = parseInt(checkedPatternInput.value, 10);
 
           output.innerHTML = getHtml({
             pixels,
@@ -235,6 +269,7 @@ function initializeUi() {
             colorMode,
             backgroundColor,
             iconSize,
+            checkedPatternSize,
           });
           output.style.backgroundColor = backgroundColor;
         } catch (error) {
