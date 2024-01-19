@@ -45,7 +45,7 @@ function getPixelData({ image, size }) {
       return acc;
     }, [])
     .map((chunk) => {
-      const [red, green, blue] = chunk;
+      const [red, green, blue, alpha] = chunk;
       // Photometric/digital ITU BT.709 http://www.itu.int/rec/R-REC-BT.709
       const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
       const color = `rgb(${red}, ${green}, ${blue})`;
@@ -53,6 +53,7 @@ function getPixelData({ image, size }) {
         red,
         green,
         blue,
+        alpha,
         luminance,
         color,
       };
@@ -68,14 +69,11 @@ function getPixelHtml({ pixel, position, settings = {} }) {
     checkedPatternSize = 0,
   } = settings;
 
-  if (checkedPatternSize > 0) {
-
-    debugger;
-  }
   if (
-    checkedPatternSize &&
-    (position.row % (checkedPatternSize + 1) !== 0 ||
-      position.column % (checkedPatternSize + 1) !== 0)
+    (checkedPatternSize &&
+      (position.row % (checkedPatternSize + 1) !== 0 ||
+        position.column % (checkedPatternSize + 1) !== 0)) ||
+    Math.round(pixel.alpha / 255) === 0
   ) {
     return `
     <span
