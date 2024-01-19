@@ -104,10 +104,6 @@ function getPixelHtml({ pixel, position, settings = {} }) {
     pixelStyle === "light"
       ? WEIGHTS[Math.floor((luminance / 255) * (WEIGHTS.length - 1))]
       : WEIGHTS[Math.floor(((255 - luminance) / 255) * (WEIGHTS.length - 1))];
-  const borderRadius =
-    pixelStyle === "light"
-      ? Math.floor(((255 - luminance) / 255) * 50) + "%"
-      : Math.floor((luminance / 255) * 50) + "%";
   let materialClassName;
   switch (symbol.style) {
     case "sharp":
@@ -129,7 +125,6 @@ function getPixelHtml({ pixel, position, settings = {} }) {
       background-color: ${backgroundColor};
       color: ${textColor};
       font-variation-settings: 'wght' ${weight}, 'FILL' ${fillColor};
-      border-radius: ${borderRadius}
     "
   >
     ${showText ? symbol.name : ""}
