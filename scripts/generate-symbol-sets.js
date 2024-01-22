@@ -4,8 +4,9 @@ const fs = require("fs");
 const yargs = require("yargs/yargs");
 const { hideBin } = require("yargs/helpers");
 const argv = yargs(hideBin(process.argv)).argv;
+const { DOMParser } = require("xmldom");
 
-const recipes = require("./icon-set-recipes");
+const recipes = require("./recipes");
 const { toHumanReadable, toKebabCase, toCamelCase } = require("./utilities");
 
 function getPathToImage({ options, symbol }) {
@@ -26,7 +27,7 @@ function getLuminanceFromImage({ symbol, options }) {
         `Skipping luminance calculation for ${symbol.name}, already has value of ${symbol.luminance}`
       );
     }
-    return Promise.resolve(symbol);
+    return Promise.resolve(symbol.luminance);
   }
   const { path } = symbol;
   if (options.debug || options.log) {
@@ -51,10 +52,7 @@ function getLuminanceFromImage({ symbol, options }) {
         if (options.debug || options.log) {
           console.log(`Luminance for ${symbol.name}: ${luminance}`);
         }
-        resolve({
-          ...symbol,
-          luminance,
-        });
+        resolve(luminance);
       }
     );
   });
@@ -77,6 +75,41 @@ function scaleLuminanceValues({ recipe, symbols, options }) {
   }));
 }
 
+function getSvgContents({ symbol, options }) {
+  if (symbol.svg) {
+    if (options.debug || options.log) {
+      console.log(
+        `Skipping svg calculation for ${symbol.name}, already has value of ${symbol.svg}`
+      );
+    }
+    return Promise.resolve(symbol.svg);
+  }
+  const { path } = symbol;
+  if (options.log) {
+    console.log(`Getting svg for ${symbol.name} at ${path}`);
+  }
+  return new Promise((resolve, reject) => {
+    fs.readFile(path, "utf8", function (err, data) {
+      if (err) {
+        if (options.debug || options.log) {
+          console.error(err);
+        }
+        reject(err);
+      }
+
+      // Parse the SVG into a DOM
+      const doc = new DOMParser().parseFromString(data, "image/svg+xml");
+      // Extract the width and height attributes and the contents of the SVG
+      const svg = doc.documentElement;
+      if (options.log) {
+        console.log(`SVG for ${symbol.name} (${width}x${height}): ${svg}`);
+      }
+      // Move everything into a group element that can be added to a master SVG
+      resolve(svg);
+    });
+  });
+}
+
 async function processRecipe({ options, recipe }) {
   // Filter out non-existant symbols, add paths to ones that do exist
   const { omittedSymbols, permittedSymbols } = recipe.symbols.reduce(
@@ -96,22 +129,21 @@ async function processRecipe({ options, recipe }) {
   // const symbolsWithLuminance = await Promise.all(permittedSymbols.map(async (symbol) => {
   //   return await getLuminanceFromImage({ symbol, options });
   // }));
-  const luminanceResults = await Promise.allSettled(
-    permittedSymbols.map(async (symbol) => {
-      return await getLuminanceFromImage({ symbol, options });
-    })
-  );
-  const symbolsWithLuminance = luminanceResults
-    .filter(({ status }) => status === "fulfilled")
-    .map(({ value }) => value);
-  const failedSymbols = luminanceResults
-    .filter(({ status }) => status === "rejected")
-    .map(({ reason }) => reason);
-  console.log("Failed symbols", failedSymbols);
+  const processedSymbols = [];
+  const failedSymbols = [];
+  for (const symbol of permittedSymbols) {
+    const luminance = await getLuminanceFromImage({ symbol, options });
+    const svg = await getSvgContents({ symbol, options });
+    if (!luminance || !svg) {
+      failedSymbols.push(symbol.name);
+      continue;
+    }
+    processedSymbols.push({ ...symbol, luminance, svg });
+  }
 
   // Remap the luminance values to a scale of 0-255
   const scaledSymbols = scaleLuminanceValues({
-    symbols: symbolsWithLuminance,
+    symbols: processedSymbols,
     recipe,
     options,
   });
@@ -148,22 +180,20 @@ async function generateSymbolSetFile({ recipe, options }) {
     options.outputDirectory,
     `${toKebabCase(name)}.js`
   );
+  const json = symbols.map((symbol) => ({
+    name: symbol.name,
+    luminance: symbol.luminance,
+    filled: symbol.filled || false,
+    svg: encodeURIComponent(symbol.svg),
+  }));
   const fileContents = `
-import { SymbolSet } from "./symbol-set.js";
+const { SymbolSet } = require("./symbol-set.js");
 
-export const ${id || toCamelCase(name)} = new SymbolSet(
+module.exports = new SymbolSet(
   "${id || toCamelCase(name)}",
   "${toHumanReadable(name)}",
-  [
-  ${symbols
-    .map(
-      (symbol) =>
-        `{ name: "${symbol.name}", luminance: ${symbol.luminance}, filled: "${
-          symbol.filled || false
-        }" }`
-    )
-    .join(",\n  ")}
-]);
+  ${JSON.stringify(json, null, 2)}
+);
 `.trimStart();
 
   if (options.debug) {
@@ -181,10 +211,13 @@ export const ${id || toCamelCase(name)} = new SymbolSet(
 }
 
 function run() {
-  if (!argv.outputDirectory) {
-    throw new Error("Missing required argument: --output-directory");
-  } else if (!fs.existsSync(argv.outputDirectory)) {
+  let outputDirectory;
+  if (argv.outputDirectory && !fs.existsSync(argv.outputDirectory)) {
     throw new Error(`Output directory does not exist: ${argv.outputDirectory}`);
+  } else if (argv.outputDirectory) {
+    outputDirectory = argv.outputDirectory;
+  } else {
+    outputDirectory = path.resolve(__dirname, "../scripts/symbol-sets");
   }
 
   if (!argv.iconDirectory) {
@@ -195,16 +228,17 @@ function run() {
 
   let recipesToUse = recipes;
   if (argv.recipes) {
-    const namesToCheck = argv.recipes.split(",").map((name) => (
-      [
+    const namesToCheck = argv.recipes
+      .split(",")
+      .map((name) => [
         name.trim(),
         toKebabCase(name.trim()),
         toCamelCase(name.trim()),
         toHumanReadable(name.trim()),
-      ]
-    )).flat();
-    recipesToUse = recipes.filter(({ id, name }) =>
-      namesToCheck.includes(name) || namesToCheck.includes(id)
+      ])
+      .flat();
+    recipesToUse = recipes.filter(
+      ({ id, name }) => namesToCheck.includes(name) || namesToCheck.includes(id)
     );
   }
 
@@ -213,7 +247,7 @@ function run() {
   }
 
   const options = {
-    outputDirectory: argv.outputDirectory,
+    outputDirectory: outputDirectory,
     iconDirectory: argv.iconDirectory,
     recipes: recipesToUse,
     debug: argv.debug,

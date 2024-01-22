@@ -5,9 +5,10 @@
   "main": "index.js",
   "scripts": {
     "generate:icon-list": "node scripts/generate-icon-list.js",
-    "generate:recipe": "node scripts/generate-recipe.js --output-directory=./scripts/icon-set-recipes",
-    "generate:symbol-sets": "node scripts/generate-symbol-sets.js --output-directory=./src/icon-sets",
-    "generate:manifest": "node scripts/generate-manifest.js --output-directory=./src/icon-sets",
+    "generate:recipe": "node scripts/generate-recipe.js --output-directory=./scripts/recipes",
+    "generate:symbol-sets": "node scripts/generate-symbol-sets.js",
+    "generate:manifest": "node scripts/generate-manifest.js",
+    "generate:image": "node scripts/generate-image.js",
     "build:js": "esbuild src/index.js --bundle --minify --sourcemap --outfile=build/index.js",
     "build:css": "tailwindcss build -i src/index.css -o build/index.css",
     "build": "yarn run build:js && yarn run build:css",
@@ -24,6 +25,7 @@
   "dependencies": {
     "html-to-image": "^1.11.11",
     "imagemagick": "^0.1.3",
+    "xmldom": "^0.6.0",
     "yargs": "^17.7.2"
   }
 }

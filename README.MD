@@ -95,7 +95,7 @@ You can optionally supply a `--debug` argument to see what's happening.
 
 # Writing a recipe
 
-Create a file at `scripts/icon-set-recipes/lowercase-recipe-name.js`. Use the code sample below as the basis of this file.
+Create a file at `scripts/recipes/lowercase-recipe-name.js`. Use the code sample below as the basis of this file.
 
 ```js
 module.exports = {
@@ -136,7 +136,7 @@ A recipe is an instruction file that declares what icons to use. It will be a fi
 
 You can pick the icons you want to use from [this list](https://fonts.google.com/icons?icon.style=Outlined&icon.platform=web).
 
-Create a file at `./scripts/icon-set-recipes/<id>.js`
+Create a file at `./scripts/recipes/<id>.js`
 
 ```js
 module.exports = {
