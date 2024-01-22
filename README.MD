@@ -182,7 +182,7 @@ yarn generate:image --input /path/to/image.png --symbol-set automaticallyGenerat
 |`input`|yes| |The path to the image that you want to convert|
 |`symbol-set`|yes| |The name of the symbol set you want to use|
 |`threshold`|no|128|The luminance value where we switch from colorful pixel backdrop/white-colored icon to white pixel background/colorful icon.|
-|`color-mode`|no|`"full-color"|The color function you want to use. `full-color`, `grayscale`, or `black-and-white`|
+|`color-mode`|no|`"full-color"`|The color function you want to use. `full-color`, `grayscale`, or `black-and-white`|
 |`checkered-pattern`|no|`false`|Whether or not the image outputs (tiles and reassembled) should have the icons arranged in a checkerboard pattern |
 |`format`|no|`.tiff`|The type of image you want for the final processed image. PNG, SVG, and TIFF only.|
 |`width`|no|matches input image size|The width of the output image **in inches**|
