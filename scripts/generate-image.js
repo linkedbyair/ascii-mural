@@ -6,9 +6,13 @@ const { hideBin } = require("yargs/helpers");
 const argv = yargs(hideBin(process.argv)).argv;
 const { DOMParser } = require("xmldom");
 const parser = new DOMParser();
+const svg2img = require("svg2img");
 const symbolSets = require("./symbol-sets");
 const { colorModes } = require("./color-modes");
 const { COLOR_MODES } = require("./constants");
+
+const DESIRED_RESOLUTION = 150; // DPI
+const OUTPUT_RESOLUTION = 72; // DPI
 
 async function run() {
   if (!argv["input"]) {
@@ -18,8 +22,8 @@ async function run() {
   }
 
   let output;
-  if (argv["output"] && path.extname(argv["output"]) !== ".svg") {
-    throw new Error("Output file must be an SVG");
+  if (argv["output"] && path.extname(argv["output"]) !== ".png") {
+    throw new Error("Output file must be an PNG");
   } else if (argv["output"]) {
     output = argv["output"];
   } else {
@@ -27,7 +31,7 @@ async function run() {
       argv["input"],
       path.extname(argv["input"])
     );
-    const outputFilename = `${originalFilename}.svg`;
+    const outputFilename = `${originalFilename}.png`;
     output = path.resolve(__dirname, "../output", outputFilename);
   }
 
@@ -73,21 +77,34 @@ async function run() {
     threshold: threshold,
     isCheckered: isCheckered,
     backgroundColor: backgroundColor,
-    iconSize: argv["icon-size"] || 20,
+    widthInInches: parseInt(argv["width"], 10) || 1,
+    scale: 1,
   };
 
   const size = await getImageSize({ options });
-  const writeStream = fs.createWriteStream(options.output);
-  writeStream.write(`
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="${size.width}"
-    height="${size.height}"
-    viewBox="0 0 ${size.width * options.iconSize} ${
-    size.height * options.iconSize
-  }"
-  >
-    `);
+
+  if (
+    typeof options.width !== "number" ||
+    Number.isNaN(options.width)
+  ) {
+    options.width = size.width / OUTPUT_RESOLUTION;
+  }
+
+  /*
+    If the options.widthInInches describes the output width in inches,
+    and the DESIRED_RESOLUTION describes the number of pixels per inch in the printed product,
+    and the OUTPUT_RESOLUTION describes the default number of pixels per inch (72),
+    and the size.width describes the number of pixels in the input image,
+    then each individual icon (pixel) in the output image should be...
+  */
+  options.iconSize =
+    (options.widthInInches *
+      OUTPUT_RESOLUTION *
+      (DESIRED_RESOLUTION / OUTPUT_RESOLUTION)) /
+    size.width;
+  options.widthInPixels = size.width * options.iconSize;
+
+  const pngs = [];
   for (let row = 0; row < size.height; row++) {
     const rect = {
       left: 0,
@@ -95,14 +112,64 @@ async function run() {
       width: size.width,
       height: 1,
     };
-    const pixels = await getPixelData({
-      rect,
-      options,
-    });
+    const pixels = await getPixelData({ rect, options });
     const markup = getSvgMarkup({ options, pixels, rect, size });
-    writeStream.write(markup);
+    const png = await createPngForRow({ svg: markup, row, options });
+    pngs.push(png);
   }
-  writeStream.write("</svg>");
+
+  console.log("Successfully generated PNGs for each row of pixels");
+  console.log(pngs.join("\n"));
+
+  // Use ImageMagick to create a collage of all the rows, layered on top of each other, and save it as a PNG
+  const collageArgs = pngs.concat([
+    "-background",
+    "none",
+    "-layers",
+    "merge",
+    options.output,
+  ]);
+  console.log("ImageMagick command:");
+  console.log("convert", collageArgs.join(" "));
+  imagemagick.convert(collageArgs, (error, data) => {
+    if (error) {
+      throw new Error(error);
+    }
+
+    console.log("Saved collage to", options.output);
+    console.log("Cleaning up temporary files...");
+    // pngs.forEach((png) => fs.unlinkSync(png));
+  });
+}
+
+function createPngForRow({ svg, row, options }) {
+  return new Promise((resolve, reject) => {
+    svg2img(
+      svg,
+      {
+        format: "png",
+        resvg: {
+          fitTo: {
+            mode: "width",
+            value: options.widthInPixels,
+          },
+        },
+      },
+      async (error, buffer) => {
+        if (error) {
+          reject(error);
+        }
+        const tempFile = path.resolve(__dirname, "../output", `row${row}.png`);
+        fs.writeFile(tempFile, buffer, (error) => {
+          if (error) {
+            reject(error);
+          }
+
+          resolve(tempFile);
+        });
+      }
+    );
+  });
 }
 
 function getImageSize({ options }) {
@@ -180,7 +247,7 @@ function getSvgMarkup({ options, pixels, rect, size }) {
       `Generating SVG for rect ${rect.width}x${rect.height} at ${rect.left},${rect.top}`
     );
   }
-  return Array.from({ length: rect.height })
+  const inner = Array.from({ length: rect.height })
     .map((_, row) =>
       Array.from({ length: rect.width }).map((_, column) => {
         const rowIndex = row + rect.top;
@@ -198,6 +265,16 @@ function getSvgMarkup({ options, pixels, rect, size }) {
     .flat()
     .filter((pixel) => pixel !== null)
     .join("");
+  return `<svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="${size.width * options.iconSize}"
+    height="${size.height * options.iconSize}"
+    viewBox="0 0 ${size.width * options.iconSize} ${
+    size.height * options.iconSize
+  }"
+  >
+    ${inner}
+  </svg>`;
 }
 
 function getSvgMarkupForPixel({ pixel, size, position, options }) {
@@ -225,6 +302,7 @@ function getSvgMarkupForPixel({ pixel, size, position, options }) {
     options.iconSize * size.width * (position.column / size.width);
   const translateY =
     options.iconSize * size.height * (position.row / size.height);
+  const scale = options.iconSize / 20; // NOTE: assuming all symbol sources are 20x20
   const transform = `translate(${translateX}, ${translateY})`;
   const symbolSvg = decodeURIComponent(symbol.svg);
   const symbolSvgDoc = parser.parseFromString(symbolSvg, "image/svg+xml");
@@ -235,7 +313,7 @@ function getSvgMarkupForPixel({ pixel, size, position, options }) {
     <rect width="${options.iconSize}" height="${
     options.iconSize
   }" fill="${backgroundColor}" x="0" y="0" />
-    <g fill="${textColor}">
+    <g fill="${textColor}" transform="scale(${scale})">
       ${justBackground ? "" : symbolSvgContents}
     </g>
   </g>
