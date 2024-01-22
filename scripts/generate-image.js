@@ -76,11 +76,18 @@ async function run() {
     threshold: threshold,
     isCheckered: isCheckered,
     backgroundColor: backgroundColor,
-    scale: 1,
+    log: Boolean(argv.log),
   };
 
   const size = await getImageSize({ options });
   options.iconSize = 20;
+
+  if (options.log) {
+    console.log(`Source image:`, options.input);
+    console.log(`Source size: ${size.width}x${size.height}`)
+    console.log(`Icon size: ${options.iconSize}x${options.iconSize}`);
+    console.log(`Will create ${size.height} SVGs, one for each row, each at ${options.iconSize * size.width}x${options.iconSize * size.height} pixels`);
+  }
 
   for (let row = 0; row < size.height; row++) {
     const rect = {
@@ -93,6 +100,7 @@ async function run() {
     const markup = getSvgMarkup({ options, pixels, rect, size });
     const outputName = `${outputBasePath}.row-${row}.svg`;
     fs.writeFileSync(outputName, markup);
+    console.log(`Successfully wrote ${outputName}`)
   }
 }
 
@@ -111,6 +119,9 @@ function getImageSize({ options }) {
 
 function getPixelData({ rect, options }) {
   const { left, top, width, height } = rect;
+  if (options.log) {
+    console.log(`Getting pixel data for row #${top}`);
+  }
   return new Promise((resolve, reject) => {
     imagemagick.convert(
       [
@@ -168,7 +179,7 @@ function getPixelData({ rect, options }) {
 function getSvgMarkup({ options, pixels, rect, size }) {
   if (options.log) {
     console.log(
-      `Generating SVG for rect ${rect.width}x${rect.height} at ${rect.left},${rect.top}`
+      `Generating SVG for row ${rect.top}`
     );
   }
   const inner = Array.from({ length: rect.height })
