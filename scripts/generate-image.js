@@ -155,10 +155,14 @@ async function run() {
     tilePaths.push(imageTilePath);
     fs.writeFileSync(imageTilePath, markup);
   }
+  console.log(`Created tiles:\n\n${tilePaths.join("\n- ")}`)
 
   if (!options.skipReassembly) {
     await reassembleImageFromTiles({ options, tilePaths, size });
+    console.log(`Created image: ${options.output}`)
   }
+
+  console.log("Done.");
 }
 
 function getImageSize({ options }) {
