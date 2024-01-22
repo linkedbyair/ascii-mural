@@ -77,9 +77,32 @@ async function run() {
   };
 
   const size = await getImageSize({ options });
-  const pixels = await getPixelData({ options, size });
-  const svg = getSvg({ options, pixels, size });
-  await writeSvg({ svg, options });
+  const writeStream = fs.createWriteStream(options.output);
+  writeStream.write(`
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="${size.width}"
+    height="${size.height}"
+    viewBox="0 0 ${size.width * options.iconSize} ${
+    size.height * options.iconSize
+  }"
+  >
+    `);
+  for (let row = 0; row < size.height; row++) {
+    const rect = {
+      left: 0,
+      top: row,
+      width: size.width,
+      height: 1,
+    };
+    const pixels = await getPixelData({
+      rect,
+      options,
+    });
+    const markup = getSvgMarkup({ options, pixels, rect, size });
+    writeStream.write(markup);
+  }
+  writeStream.write("</svg>");
 }
 
 function getImageSize({ options }) {
@@ -95,51 +118,13 @@ function getImageSize({ options }) {
   });
 }
 
-async function getPixelData({ options, size }) {
-  return new Promise(async (resolve, reject) => {
-    const data = [];
-    for (let row = 0; row < size.height; row++) {
-      try {
-        const dataForRow = await extractPixelDataFromImageMagick({
-          rect: {
-            left: 0,
-            top: row,
-            width: size.width,
-            height: 1,
-          },
-          options,
-        });
-        data.push(dataForRow);
-      } catch(error) {
-        reject(error);
-      }
-    }
-    resolve(data.flat());
-  });
-
-  // Go through the image row by row, because ImageMagick might crash if we try to get all pixels at once.
-  return Promise.all(
-    Array.from({ length: size.height }).map((_, row) => {
-      return extractPixelDataFromImageMagick({
-        rect: {
-          left: 0,
-          top: row,
-          width: size.width,
-          height: 1,
-        },
-        options,
-      });
-    })
-  ).then((rows) => rows.flat());
-}
-
-function extractPixelDataFromImageMagick({ rect, options }) {
+function getPixelData({ rect, options }) {
   const { left, top, width, height } = rect;
   return new Promise((resolve, reject) => {
     imagemagick.convert(
       [
         options.input,
-        rect && '-extent', 
+        rect && "-extent",
         rect && `${width}x${height}+${left}+${top}`,
         "-matte",
         "text:",
@@ -189,33 +174,33 @@ function extractPixelDataFromImageMagick({ rect, options }) {
   });
 }
 
-function getSvg({ options, pixels, size }) {
-  const inner = Array.from({ length: size.height })
+function getSvgMarkup({ options, pixels, rect, size }) {
+  if (options.log) {
+    console.log(
+      `Generating SVG for rect ${rect.width}x${rect.height} at ${rect.left},${rect.top}`
+    );
+  }
+  return Array.from({ length: rect.height })
     .map((_, row) =>
-      Array.from({ length: size.width }).map((_, column) => {
-        const pixelIndex = row * size.width + column;
+      Array.from({ length: rect.width }).map((_, column) => {
+        const rowIndex = row + rect.top;
+        const columnIndex = column + rect.left;
+        const pixelIndex = row * rect.width + column;
         const pixel = pixels[pixelIndex];
-        const position = { row, column, pixel: pixelIndex };
-        return getPixelHtml({ pixel, size, position, options });
+        const position = {
+          row: rowIndex,
+          column: columnIndex,
+          pixel: pixelIndex,
+        };
+        return getSvgMarkupForPixel({ pixel, size, position, options });
       })
     )
     .flat()
     .filter((pixel) => pixel !== null)
     .join("");
-  return `
-<svg
-  xmlns="http://www.w3.org/2000/svg"
-  width="${size.width}"
-  height="${size.height}"
-  viewBox="0 0 ${size.width * options.iconSize} ${
-    size.height * options.iconSize
-  }"
->
-  ${inner}
-</svg>`;
 }
 
-function getPixelHtml({ pixel, size, position, options }) {
+function getSvgMarkupForPixel({ pixel, size, position, options }) {
   if (
     (options.isCheckered &&
       (position.row % 2 !== 0) ^ (position.column % 2 !== 0)) ||
@@ -256,17 +241,6 @@ function getPixelHtml({ pixel, size, position, options }) {
   </g>
   `;
   return group;
-}
-
-function writeSvg({ svg, options }) {
-  return new Promise((resolve, reject) => {
-    fs.writeFile(options.output, svg, (error) => {
-      if (error) {
-        reject(error);
-      }
-      resolve();
-    });
-  });
 }
 
 try {
