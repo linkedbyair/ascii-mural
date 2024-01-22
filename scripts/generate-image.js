@@ -10,6 +10,9 @@ const symbolSets = require("./symbol-sets");
 const { colorModes } = require("./color-modes");
 const { COLOR_MODES } = require("./constants");
 
+const DESIRED_RESOLUTION = 150; // DPI
+const OUTPUT_RESOLUTION = 72; // DPI
+
 async function run() {
   if (!argv["input"]) {
     throw new Error("Missing required argument: --input");
@@ -17,9 +20,24 @@ async function run() {
     throw new Error(`Input file does not exist: ${argv["input"]}`);
   }
 
+  let format = argv["format"];
+  if (format) {
+    if (!format.startsWith(".")) {
+      format = "." + format;
+    }
+
+    if (![".png", ".svg", ".tiff"].includes(format)) {
+      throw new Error(`Output format must be one of: .png, .svg, .tiff`);
+    }
+  } else {
+    format = ".tiff";
+  }
+
   let output;
-  if (argv["output"] && path.extname(argv["output"]) !== ".png") {
-    throw new Error("Output file must be an PNG");
+  if (argv["output"] && path.extname(argv["output"]) !== format) {
+    throw new Error(
+      "Output file path must match the specified format (which defaults to .tiff)"
+    );
   } else if (argv["output"]) {
     output = argv["output"];
   } else {
@@ -27,7 +45,7 @@ async function run() {
       argv["input"],
       path.extname(argv["input"])
     );
-    const outputFilename = `${originalFilename}.png`;
+    const outputFilename = originalFilename + format;
     output = path.resolve(__dirname, "../output", outputFilename);
   }
 
@@ -63,6 +81,8 @@ async function run() {
     throw new Error(`Threshold must be a number between 0 and 255`);
   }
 
+  const skipReassembly = Boolean(argv["skip-reassembly"]) || false;
+
   const isCheckered = Boolean(argv["checkered-pattern"]) || false;
 
   const backgroundColor = argv["background-color"] || null;
@@ -71,24 +91,57 @@ async function run() {
     input: argv.input,
     output: output,
     outputBasePath: outputBasePath,
+    format: format,
     symbolSet: symbolSets[argv["symbol-set"]],
     colorMode: colorMode,
     threshold: threshold,
     isCheckered: isCheckered,
     backgroundColor: backgroundColor,
     log: Boolean(argv.log),
+    skipReassembly: skipReassembly,
+    widthInInches: parseInt(argv["width"], 10) || 1,
   };
 
   const size = await getImageSize({ options });
-  options.iconSize = 20;
+
+  if (typeof options.width !== "number" || Number.isNaN(options.width)) {
+    options.width = size.width / OUTPUT_RESOLUTION;
+  }
+
+  /*
+    If the options.widthInInches describes the output width in inches,
+    and the DESIRED_RESOLUTION describes the number of pixels per inch in the printed product,
+    and the OUTPUT_RESOLUTION describes the default number of pixels per inch (72),
+    and the size.width describes the number of pixels in the input image,
+    then each individual icon (pixel) in the output image should be...
+  */
+  options.iconSize =
+    (options.widthInInches *
+      OUTPUT_RESOLUTION *
+      (DESIRED_RESOLUTION / OUTPUT_RESOLUTION)) /
+    size.width;
+  options.widthInPixels = size.width * options.iconSize;
 
   if (options.log) {
     console.log(`Source image:`, options.input);
-    console.log(`Source size: ${size.width}x${size.height}`)
+    console.log(`Source size: ${size.width}x${size.height}`);
     console.log(`Icon size: ${options.iconSize}x${options.iconSize}`);
-    console.log(`Will create ${size.height} SVGs, one for each row, each at ${options.iconSize * size.width}x${options.iconSize * size.height} pixels`);
+    console.log(
+      `Will create ${size.height} files, one for each row, each at ${
+        options.iconSize * size.width
+      }x${options.iconSize * size.height} pixels`
+    );
+    if (options.skipReassembly) {
+      console.log(`Will not reassemble image from tiles.`);
+    } else {
+      console.log(
+        `Will reassemble image from tiles at ${options.widthInPixels}x${options.widthInPixels} pixels`
+      );
+      console.log(`Output image: ${options.output}`);
+    }
   }
 
+  const tilePaths = [];
   for (let row = 0; row < size.height; row++) {
     const rect = {
       left: 0,
@@ -98,9 +151,13 @@ async function run() {
     };
     const pixels = await getPixelData({ rect, options });
     const markup = getSvgMarkup({ options, pixels, rect, size });
-    const outputName = `${outputBasePath}.row-${row}.svg`;
-    fs.writeFileSync(outputName, markup);
-    console.log(`Successfully wrote ${outputName}`)
+    const imageTilePath = `${outputBasePath}.row-${row}.svg`;
+    tilePaths.push(imageTilePath);
+    fs.writeFileSync(imageTilePath, markup);
+  }
+
+  if (!options.skipReassembly) {
+    await reassembleImageFromTiles({ options, tilePaths, size });
   }
 }
 
@@ -178,9 +235,7 @@ function getPixelData({ rect, options }) {
 
 function getSvgMarkup({ options, pixels, rect, size }) {
   if (options.log) {
-    console.log(
-      `Generating SVG for row ${rect.top}`
-    );
+    console.log(`Generating SVG for row ${rect.top}`);
   }
   const inner = Array.from({ length: rect.height })
     .map((_, row) =>
@@ -202,8 +257,8 @@ function getSvgMarkup({ options, pixels, rect, size }) {
     .join("");
   return `<svg
     xmlns="http://www.w3.org/2000/svg"
-    width="${size.width * options.iconSize}"
-    height="${size.height * options.iconSize}"
+    width="${options.widthInPixels}"
+    height="${(options.widthInPixels * size.height) / size.width}"
     viewBox="0 0 ${size.width * options.iconSize} ${
     size.height * options.iconSize
   }"
@@ -238,6 +293,7 @@ function getSvgMarkupForPixel({ pixel, size, position, options }) {
   const translateY =
     options.iconSize * size.height * (position.row / size.height);
   const transform = `translate(${translateX}, ${translateY})`;
+  const scale = `scale(${options.iconSize / 20})`; // NOTE: assuming all symbols sources are 20x20
   const symbolSvg = decodeURIComponent(symbol.svg);
   const symbolSvgDoc = parser.parseFromString(symbolSvg, "image/svg+xml");
   const symbolSvgContents = symbolSvgDoc.documentElement.childNodes;
@@ -247,12 +303,53 @@ function getSvgMarkupForPixel({ pixel, size, position, options }) {
     <rect width="${options.iconSize}" height="${
     options.iconSize
   }" fill="${backgroundColor}" x="0" y="0" />
-    <g fill="${textColor}">
+    <g fill="${textColor}" transform="${scale}">
       ${justBackground ? "" : symbolSvgContents}
     </g>
   </g>
   `;
   return group;
+}
+
+function reassembleImageFromTiles({ options, tilePaths, size }) {
+  if (options.log) {
+    console.log("Reassembling image from tiles.");
+  }
+  return new Promise((resolve, reject) => {
+    if (options.format === ".svg") {
+      console.log("Not supported.");
+    } else {
+      const imagemagickOptions = {
+        ".tiff": ["-background", "none", "-compress", "lzw", "-format", "tiff"],
+        ".png": ["-background", "none"],
+      };
+
+      console.log(
+        "ImageMagick command: convert ",
+        ...imagemagickOptions[options.format],
+        ...tilePaths,
+        "-layers",
+        "merge",
+        options.output
+      );
+      imagemagick.convert(
+        [
+          ...imagemagickOptions[options.format],
+          ...tilePaths,
+          "-layers",
+          "merge",
+          options.output,
+        ],
+        (error, data) => {
+          if (error) {
+            reject(error);
+          }
+
+          resolve(data);
+        }
+      );
+    }
+  });
 }
 
 try {
