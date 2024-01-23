@@ -7,13 +7,20 @@ const argv = yargs(hideBin(process.argv)).argv;
 const { DOMParser } = require("xmldom");
 
 const recipes = require("./recipes");
-const { toHumanReadable, toKebabCase, toCamelCase } = require("./utilities");
+const {
+  toHumanReadable,
+  toKebabCase,
+  toCamelCase,
+  toSnakeCase,
+} = require("./utilities");
 
 function getPathToImage({ options, symbol }) {
   const { iconDirectory } = options;
   const { name, filled = false } = symbol;
-  const fileName = filled ? `${name}_fill1_20px.svg` : `${name}_20px.svg`;
-  return path.resolve(iconDirectory, name, "materialsymbolsoutlined", fileName);
+  const fileName = filled
+    ? `${toSnakeCase(name)}_fill1_20px.svg`
+    : `${toSnakeCase(name)}_20px.svg`;
+  return path.resolve(iconDirectory, toSnakeCase(name), "materialsymbolsoutlined", fileName);
 }
 
 /*
@@ -43,9 +50,13 @@ function getLuminanceFromImage({ symbol, options }) {
           }
           reject(err);
         }
-        const matches = stdout.match(/(\d+\.\d+)/);
+        const matches = stdout.match(/(\d+(\.\d+)?)/);
         if (!matches || matches.length < 1) {
-          return reject(symbol.name);
+          const errorMessage = `Luminance couldn't be calculated for ${symbol.name}. Output from ImageMagick: ${stdout}`
+          if (options.debug || options.log) {
+            console.error(errorMessage);
+          }
+          return reject(errorMessage);
         }
         const luminance = Math.round((parseFloat(matches[1], 10) / 100) * 255);
 
@@ -101,8 +112,28 @@ function getSvgContents({ symbol, options }) {
       const doc = new DOMParser().parseFromString(data, "image/svg+xml");
       // Extract the width and height attributes and the contents of the SVG
       const svg = doc.documentElement;
+      const viewBox = svg.getAttribute("viewBox");
+      if (viewBox) {
+        if (options.log) {
+          console.log(`Resizing svg for ${symbol.name}...`);
+        }
+        const [viewBoxX, viewBoxY, viewBoxWidth, viewBoxHeight] = viewBox.split(" ");
+        const scale = 20 / viewBoxWidth;
+        // const translateX = viewboxDimensions[0] > 0 ? viewboxDimensions[0]
+        const translateX = 0; // TODO: ........
+        const translateY = viewBoxY < 0 ? -1 * viewBoxY : 0
+        const inner = svg.childNodes;
+        const resizedSvg = `
+<svg width="20" height="20" viewBox="0 0 20 20">
+  <g transform="scale(${scale}) translate(${translateX}, ${translateY})" transform-origin="top left">
+    ${inner}
+  </g>
+</svg>
+        `;
+        return resolve(resizedSvg);
+      }
       if (options.log) {
-        console.log(`SVG for ${symbol.name} (${width}x${height}): ${svg}`);
+        // console.log(`SVG for ${symbol.name} (${width}x${height}): ${svg}`);
       }
       // Move everything into a group element that can be added to a master SVG
       resolve(svg);
