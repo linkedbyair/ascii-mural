@@ -1,23 +1,30 @@
-import {COLOR_MODES} from "../constants";
+const { COLOR_MODES } = require("./constants");
 
-export function fullColor(settings={}, {red,green,blue}) {
+function fullColor(settings = {}, { red, green, blue }) {
   return `rgb(${red}, ${green}, ${blue})`;
 }
 
-export function grayscale(settings={}, {luminance}) {
+function grayscale(settings = {}, { luminance }) {
   return `rgb(${luminance}, ${luminance}, ${luminance})`;
 }
 
-export function blackAndWhite(settings={}, {luminance}) {
+function blackAndWhite(settings = {}, { luminance }) {
   // If less than threshold, we're selecting a background color for a white text.
   // If greater than threshold, we're selecting a text color for a white background.
   // In both cases, we are returning black.
   return "black";
 }
 
-export const colorModes = {
+const colorModes = {
   default: fullColor,
   [COLOR_MODES.FULL_COLOR]: fullColor,
   [COLOR_MODES.GRAYSCALE]: grayscale,
   [COLOR_MODES.BLACK_AND_WHITE]: blackAndWhite,
-}
+};
+
+module.exports = {
+  fullColor: fullColor,
+  grayscale: grayscale,
+  blackAndWhite: blackAndWhite,
+  colorModes: colorModes,
+};

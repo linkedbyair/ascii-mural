@@ -4,13 +4,28 @@ const yargs = require("yargs/yargs");
 const { hideBin } = require("yargs/helpers");
 const argv = yargs(hideBin(process.argv)).argv;
 
-const recipes = require("./icon-set-recipes");
-const { toKebabCase } = require("./utilities");
+const recipes = require("./recipes");
+const { toKebabCase, toCamelCase } = require("./utilities");
 
 async function generateIndexFile({ recipes, options }) {
-  const fileContents = recipes
-    .map(({ name }) => `export * from "./${toKebabCase(name)}.js"`)
-    .join("\n");
+  const { importLines, exportLines } = recipes.reduce(
+    ({ importLines, exportLines }, { name }) => {
+      const camelCaseName = toCamelCase(name);
+      const kebabCaseName = toKebabCase(name);
+      return {
+        importLines: [
+          ...importLines,
+          `const ${camelCaseName} = require("./${kebabCaseName}.js")`,
+        ],
+        exportLines: [...exportLines, `${camelCaseName}: ${camelCaseName}`],
+      };
+    },
+    { importLines: [], exportLines: [] }
+  );
+  const fileContents =
+    importLines.join("\n") +
+    "\n\n" +
+    `module.exports = {${exportLines.join(", ")}}`;
   const filePath = path.resolve(options.outputDirectory, "index.js");
 
   if (options.debug) {
@@ -26,20 +41,23 @@ async function generateIndexFile({ recipes, options }) {
 }
 
 function run() {
-  if (!argv.outputDirectory) {
-    throw new Error("Missing required argument: --output-directory");
+  const outputDirectory =
+    argv.outputDirectory ||
+    path.resolve(__dirname, "../", "scripts", "symbol-sets");
+  if (!fs.existsSync(outputDirectory)) {
+    throw new Error("Output directory does not exist");
   }
 
-  const debugMode = argv.debug;
-
   const options = {
-    outputDirectory: argv.outputDirectory,
-    debug: debugMode,
+    outputDirectory,
+    debug: argv.debugMode,
     log: argv.log,
   };
 
   if (options.debug) {
-    console.log(`Would write symbol sets to ${options.outputDirectory}, but debug mode is activated.`);
+    console.log(
+      `Would write symbol sets to ${options.outputDirectory}, but debug mode is activated.`
+    );
   } else if (options.log) {
     console.log(`Writing symbol sets to ${options.outputDirectory}`);
   }

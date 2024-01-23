@@ -1,8 +1,6 @@
 # ASCII Mural Tool
 
-This is a tool to generate ASCII-ish images using icons from the Material Design Icons repository. It contains a web-based tool to adjust parameters for the generated image. And it also contains scripts that analyze images and generate values for those parameters.
-
-The tool is hosted with Github Pages, so you do not need to clone this repository in order to use it. [You can instead use the hosted version here.](https://linkedbyair.github.io/ascii-mural/)
+This is a tool to generate ASCII-ish images using icons from the Material Design Icons repository. 
 
 # Helpful tip
 
@@ -60,21 +58,6 @@ If you _are_ going to make changes to tool, such as creating new symbol sets, th
 yarn
 ```
 
-# Running the web-based tool
-
-1. Boot up a server
-
-```sh
-yarn serve
-```
-
-2. Continuously compile changes to the code
-
-This is only necessary if you are making changes to the code.
-
-```sh
-yarn start
-```
 
 # Terminology
 
@@ -88,14 +71,14 @@ yarn start
 If you are going to generate a recipe, you will need to know the luminance values for each icon. This repository contains a script that will generate a JSON file with that information. [A version of this file is included in this repository](https://github.com/linkedbyair/ascii-mural/blob/857bda6d8cac4aa9bd8d6aea81c8be60561bba29/scripts/icon-list.json), but you can regenerate it whenever you want.
 
 ```sh
-yarn generate:icon-list --icon-directory=/path/to/material-design-icons-master/symbols/web
+yarn generate:icon-list --icon-directory=$icon_dir
 ```
 
 You can optionally supply a `--debug` argument to see what's happening.
 
 # Writing a recipe
 
-Create a file at `scripts/icon-set-recipes/lowercase-recipe-name.js`. Use the code sample below as the basis of this file.
+Create a file at `scripts/recipes/lowercase-recipe-name.js`. Use the code sample below as the basis of this file.
 
 ```js
 module.exports = {
@@ -136,7 +119,7 @@ A recipe is an instruction file that declares what icons to use. It will be a fi
 
 You can pick the icons you want to use from [this list](https://fonts.google.com/icons?icon.style=Outlined&icon.platform=web).
 
-Create a file at `./scripts/icon-set-recipes/<id>.js`
+Create a file at `./scripts/recipes/<id>.js`
 
 ```js
 module.exports = {
@@ -161,7 +144,7 @@ This repository has a script you can run to automatically generate a symbol set 
 |`--debug`|no|Include if you want to read logs of the output before you create files. This can be useful if your attempt to generate a symbol set fails.| 
 
 ```sh
-yarn generate:symbol-sets --icon-directory=/path/to/material-design-icons-master/symbols/web --recipes=name_of_your_symbol_set
+yarn generate:symbol-sets --icon-directory=$icon_dir --recipes=name_of_your_symbol_set
 ```
 
 **3. Regenerate the symbol set manifest**
@@ -185,3 +168,23 @@ A single file exports all of the available symbol sets for the tool to use. This
 ```sh
 yarn generate:manifest
 ```
+
+# Generate an image
+
+This script accepts an image and creates a new image where each source image pixel is replaced with a symbol. 
+
+```sh
+yarn generate:image --input /path/to/image.png --symbol-set automaticallyGenerated10Shades
+```
+
+| option | required? | default value | description |
+|--------|-----------|---------------|-------------|
+|`input`|yes| |The path to the image that you want to convert|
+|`symbol-set`|yes| |The name of the symbol set you want to use|
+|`threshold`|no|128|The luminance value where we switch from colorful pixel backdrop/white-colored icon to white pixel background/colorful icon.|
+|`color-mode`|no|`"full-color"`|The color function you want to use. `full-color`, `grayscale`, or `black-and-white`|
+|`checkered-pattern`|no|`false`|Whether or not the image outputs (tiles and reassembled) should have the icons arranged in a checkerboard pattern |
+|`format`|no|`.tiff`|The type of image you want for the final processed image. PNG, SVG, and TIFF only.|
+|`width`|no|matches input image size|The width of the output image **in inches**|
+|`skip-reassembly`|no|`false`|If true, will generate files for image tiles, but not the reassembled image|
+|`log`|no|`false`|If true, will spit out logs while the program is running|
