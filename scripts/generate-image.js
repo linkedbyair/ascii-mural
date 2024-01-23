@@ -71,7 +71,7 @@ async function run() {
     colorMode = COLOR_MODES.FULL_COLOR;
   }
 
-  const threshold = parseInt(argv.threshold, 10) || 128;
+  const threshold = typeof argv.threshold !== undefined ? parseInt(argv.threshold, 10) : 128;
   if (
     typeof threshold !== "number" ||
     threshold < 0 ||
@@ -205,15 +205,21 @@ function getPixelData({ rect, options }) {
         ...etc etc
         */
         if (error) {
+          if (options.log) {
+            console.error(error);
+          }
           reject(error);
         }
 
         const lines = data.split("\n");
         const pixels = lines
           .filter((line) => line !== "")
-          .map((line) => {
+          .map((line, index) => {
             // Red (0-255), Green (0-255), Blue (0-255), Alpha (0-255)
-            const channels = line.match(/\((\d+),(\d+),(\d+),(\d+)\)/);
+            const channelPattern = `(\\d+\\.*\\d*)`;
+            const rgbaPattern = Array.from({length: 4}).fill(channelPattern).join(",");
+            const pattern = '\\(' + rgbaPattern + '\\)';
+            const channels = line.match(new RegExp(pattern));
             if (!channels || channels.length < 5) {
               return null;
             }
