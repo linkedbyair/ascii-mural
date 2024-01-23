@@ -6,8 +6,10 @@ const automaticallyGenerated50Shades = require("./automatically-generated-50-sha
 const clocks = require("./clocks.js");
 const communication = require("./communication.js");
 const maps = require("./maps.js");
+const physicalNetwork = require("./physical-network.js");
 const social = require("./social.js");
 const social2 = require("./social-2.js");
+const telecomNetwork = require("./telecom-network.js");
 const weather = require("./weather.js");
 
 module.exports = {
@@ -19,7 +21,9 @@ module.exports = {
   clocks: clocks,
   communication: communication,
   maps: maps,
+  physicalNetwork: physicalNetwork,
   social: social,
   social2: social2,
+  telecomNetwork: telecomNetwork,
   weather: weather,
 };
