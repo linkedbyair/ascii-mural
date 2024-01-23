@@ -142,6 +142,7 @@ async function run() {
   }
 
   const tilePaths = [];
+  const svgInners = [];
   for (let row = 0; row < size.height; row++) {
     const rect = {
       left: 0,
@@ -150,16 +151,17 @@ async function run() {
       height: 1,
     };
     const pixels = await getPixelData({ rect, options });
-    const markup = getSvgMarkup({ options, pixels, rect, size });
+    const { svg, inner } = getSvgMarkup({ options, pixels, rect, size });
     const imageTilePath = `${outputBasePath}.row-${row}.svg`;
     tilePaths.push(imageTilePath);
-    fs.writeFileSync(imageTilePath, markup);
+    svgInners.push(inner);
+    fs.writeFileSync(imageTilePath, svg);
   }
-  console.log(`Created tiles:\n\n${tilePaths.join("\n- ")}`)
+  console.log(`Created tiles:\n\n${tilePaths.join("\n- ")}`);
 
   if (!options.skipReassembly) {
-    await reassembleImageFromTiles({ options, tilePaths, size });
-    console.log(`Created image: ${options.output}`)
+    await reassembleImageFromTiles({ options, tilePaths, svgInners, size });
+    console.log(`Created image: ${options.output}`);
   }
 
   console.log("Done.");
@@ -237,10 +239,27 @@ function getPixelData({ rect, options }) {
   });
 }
 
+function getSvgWrapper({ size, options }) {
+  return {
+    open: `
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="${options.widthInPixels}"
+  height="${(options.widthInPixels * size.height) / size.width}"
+  viewBox="0 0 ${size.width * options.iconSize} ${
+      size.height * options.iconSize
+    }"
+>
+  `,
+    close: `</svg>`,
+  };
+}
+
 function getSvgMarkup({ options, pixels, rect, size }) {
   if (options.log) {
     console.log(`Generating SVG for row ${rect.top}`);
   }
+  const { open, close } = getSvgWrapper({ size, options });
   const inner = Array.from({ length: rect.height })
     .map((_, row) =>
       Array.from({ length: rect.width }).map((_, column) => {
@@ -259,16 +278,11 @@ function getSvgMarkup({ options, pixels, rect, size }) {
     .flat()
     .filter((pixel) => pixel !== null)
     .join("");
-  return `<svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="${options.widthInPixels}"
-    height="${(options.widthInPixels * size.height) / size.width}"
-    viewBox="0 0 ${size.width * options.iconSize} ${
-    size.height * options.iconSize
-  }"
-  >
-    ${inner}
-  </svg>`;
+  const svg = open + inner + close;
+  return {
+    svg,
+    inner,
+  };
 }
 
 function getSvgMarkupForPixel({ pixel, size, position, options }) {
@@ -303,7 +317,7 @@ function getSvgMarkupForPixel({ pixel, size, position, options }) {
   const symbolSvgContents = symbolSvgDoc.documentElement.childNodes;
 
   const group = `
-  <g transform="${transform}">
+  <g id="${symbol.name}" transform="${transform}" data-row="${position.row}" data-column="${position.column}" data-symbol="${symbol.name}" data-symbol-filled="${symbol.filled}">
     <rect width="${options.iconSize}" height="${
     options.iconSize
   }" fill="${backgroundColor}" x="0" y="0" />
@@ -315,13 +329,23 @@ function getSvgMarkupForPixel({ pixel, size, position, options }) {
   return group;
 }
 
-function reassembleImageFromTiles({ options, tilePaths, size }) {
+function reassembleImageFromTiles({ options, tilePaths, svgInners, size }) {
   if (options.log) {
     console.log("Reassembling image from tiles.");
   }
   return new Promise((resolve, reject) => {
     if (options.format === ".svg") {
-      console.log("Not supported.");
+      const writeFileSteam = fs.createWriteStream(options.output);
+      const { open, close } = getSvgWrapper({ size, options });
+      writeFileSteam.on("finish", () => {
+        resolve();
+      });
+      writeFileSteam.write(open);
+      svgInners.forEach((inner) => {
+        writeFileSteam.write(inner);
+      });
+      writeFileSteam.write(close);
+      writeFileSteam.close();
     } else {
       const imagemagickOptions = {
         ".tiff": ["-background", "none", "-compress", "lzw", "-format", "tiff"],
