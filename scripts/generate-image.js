@@ -71,14 +71,14 @@ async function run() {
     colorMode = COLOR_MODES.FULL_COLOR;
   }
 
-  const threshold = typeof argv.threshold !== undefined ? parseInt(argv.threshold, 10) : 128;
+  const threshold = typeof argv.threshold !== "undefined" ? parseInt(argv.threshold, 10) : 128;
   if (
     typeof threshold !== "number" ||
     threshold < 0 ||
     threshold > 255 ||
     isNaN(threshold)
   ) {
-    throw new Error(`Threshold must be a number between 0 and 255`);
+    throw new Error(`Threshold must be a number between 0 and 255. You passed in ${threshold}.`);
   }
 
   const skipReassembly = Boolean(argv["skip-reassembly"]) || false;
