@@ -180,6 +180,7 @@ yarn generate:image --input /path/to/image.png --symbol-set automaticallyGenerat
 | option | required? | default value | description |
 |--------|-----------|---------------|-------------|
 |`input`|yes| |The path to the image that you want to convert|
+|`output`|no|The path where the image (and the tiles) should end up. File extension must match your `format`. Defaults to the input file name, placed in the repository's `output` directory|
 |`symbol-set`|yes| |The name of the symbol set you want to use|
 |`threshold`|no|128|The luminance value where we switch from colorful pixel backdrop/white-colored icon to white pixel background/colorful icon.|
 |`color-mode`|no|`"full-color"`|The color function you want to use. `full-color`, `grayscale`, or `black-and-white`|
