@@ -303,7 +303,6 @@ function getSvgMarkupForPixel({ pixel, size, position, options }) {
     pixelStyle === "light"
       ? options.colorMode(options, pixel)
       : options.backgroundColor || "white";
-  const justBackground = pixel.luminance === 255;
   const pixelTranslationX =
     options.iconSize * size.width * (position.column / size.width);
   const pixelTranslationY =
@@ -340,7 +339,7 @@ function getSvgMarkupForPixel({ pixel, size, position, options }) {
     />
     <g transform="translate(0.5075, 0.5075) scale(0.66)">
       <g fill="${textColor}" transform="scale(${iconScaleToFitPixel})">
-        ${justBackground ? "" : symbolSvgContents}
+        ${symbolSvgContents}
       </g>
     </g>
   </g>
