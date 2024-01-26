@@ -55,14 +55,17 @@ async function run() {
   const outputBasePath = output.replace(path.extname(output), "");
   const symbolSet = getSymbolSet(argv["symbol-set"]);
   const colorMode = getColorMode(argv["color-mode"]);
-  const threshold = typeof argv.threshold !== "undefined" ? parseInt(argv.threshold, 10) : 128;
+  const threshold =
+    typeof argv.threshold !== "undefined" ? parseInt(argv.threshold, 10) : 128;
   if (
     typeof threshold !== "number" ||
     threshold < 0 ||
     threshold > 255 ||
     isNaN(threshold)
   ) {
-    throw new Error(`Threshold must be a number between 0 and 255. You passed in ${threshold}.`);
+    throw new Error(
+      `Threshold must be a number between 0 and 255. You passed in ${threshold}.`
+    );
   }
   const skipReassembly = Boolean(argv["skip-reassembly"]) || false;
   const isCheckered = Boolean(argv["checkered-pattern"]) || false;
@@ -203,8 +206,10 @@ function getPixelData({ rect, options }) {
           .map((line, index) => {
             // Red (0-255), Green (0-255), Blue (0-255), Alpha (0-255)
             const channelPattern = `(\\d+\\.*\\d*)`;
-            const rgbaPattern = Array.from({length: 4}).fill(channelPattern).join(",");
-            const pattern = '\\(' + rgbaPattern + '\\)';
+            const rgbaPattern = Array.from({ length: 4 })
+              .fill(channelPattern)
+              .join(",");
+            const pattern = "\\(" + rgbaPattern + "\\)";
             const channels = line.match(new RegExp(pattern));
             if (!channels || channels.length < 5) {
               return null;
@@ -215,7 +220,7 @@ function getPixelData({ rect, options }) {
             const alpha = parseInt(channels[4], 10);
             const luminance = Math.round((red + green + blue) / 3);
             const color = `rgba(${red}, ${green}, ${blue}, ${alpha})`;
-          
+
             return {
               red,
               green,
@@ -310,7 +315,11 @@ function getSvgMarkupForPixel({ pixel, size, position, options }) {
   const symbolSvgContents = symbolSvgDoc.documentElement.childNodes;
 
   const group = `
-  <g id="${symbol.name}" transform="${transform}" data-row="${position.row}" data-column="${position.column}" data-symbol="${symbol.name}" data-symbol-filled="${symbol.filled}">
+  <g id="${symbol.name}" transform="${transform}" data-row="${
+    position.row
+  }" data-column="${position.column}" data-symbol="${
+    symbol.name
+  }" data-symbol-filled="${symbol.filled}">
     <rect width="${options.iconSize}" height="${
     options.iconSize
   }" fill="${backgroundColor}" x="0" y="0" />
@@ -326,7 +335,7 @@ function reassembleImageFromTiles({ options, tilePaths, svgInners, size }) {
   if (options.log) {
     console.log("Reassembling image from tiles.");
   }
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     if (options.format === ".svg") {
       const writeFileSteam = fs.createWriteStream(options.output);
       const { open, close } = getSvgWrapper({ size, options });
@@ -340,35 +349,54 @@ function reassembleImageFromTiles({ options, tilePaths, svgInners, size }) {
       writeFileSteam.write(close);
       writeFileSteam.close();
     } else {
-      const imagemagickOptions = {
-        ".tiff": ["-background", "none", "-compress", "lzw", "-format", "tiff"],
-        ".png": ["-background", "none"],
+      const mergeImages = ({ inputs, output }) => {
+        inputs = Array.isArray(inputs) ? inputs : [inputs];
+        if (options.log) {
+          const message =
+            inputs.length > 1 ? "Merging tiles:" : "Merging tile:";
+          console.log(`${message} ${inputs.join(", ")}`);
+        }
+        return new Promise((resolve, reject) => {
+          const imagemagickOptionsForFormat = {
+            ".tiff": [
+              "-background",
+              "none",
+              "-compress",
+              "lzw",
+              "-format",
+              "tiff",
+            ],
+            ".png": ["-background", "none"],
+          };
+          imagemagick.convert(
+            [
+              ...imagemagickOptionsForFormat[options.format],
+              ...inputs,
+              "-layers",
+              "merge",
+              output,
+            ],
+            (error, data) => {
+              if (error) {
+                reject(error);
+              }
+              resolve(data);
+            }
+          );
+        });
       };
 
-      console.log(
-        "ImageMagick command: convert ",
-        ...imagemagickOptions[options.format],
-        ...tilePaths,
-        "-layers",
-        "merge",
-        options.output
-      );
-      imagemagick.convert(
-        [
-          ...imagemagickOptions[options.format],
-          ...tilePaths,
-          "-layers",
-          "merge",
-          options.output,
-        ],
-        (error, data) => {
-          if (error) {
-            reject(error);
-          }
+      await mergeImages({
+        inputs: tilePaths[0],
+        output: options.output,
+      });
 
-          resolve(data);
-        }
-      );
+      for (let tilePath of tilePaths.slice(1)) {
+        await mergeImages({
+          inputs: [options.output, tilePath],
+          output: options.output,
+        });
+      }
     }
   });
 }
