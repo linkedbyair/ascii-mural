@@ -14,20 +14,30 @@ const {
   toSnakeCase,
 } = require("js-convert-case");
 
-function getPathToImage({ options, symbol }) {
+function getPathsToSvgsByWeight({ options, symbol }) {
   const { iconDirectory } = options;
   const { name, filled = false } = symbol;
-  const fileName = filled
-    ? `${toSnakeCase(name)}_fill1_20px.svg`
-    : `${toSnakeCase(name)}_20px.svg`;
-  return path.resolve(iconDirectory, toSnakeCase(name), "materialsymbolsoutlined", fileName);
+  const snakeCaseName = toSnakeCase(name);
+  const weights = [100, 200, 300, 500, 600, 700];
+  const style = filled ? "fill1" : "";
+  const size = "20px";
+  const paths = weights.reduce((acc, weight) => {
+    acc[weight] = path.resolve(
+      iconDirectory,
+      snakeCaseName,
+      "materialsymbolsoutlined",
+      `${snakeCaseName}_wght${weight}${style}_${size}.svg`
+    );
+    return acc;
+  }, {});
+  return paths;
 }
 
 /*
  ImageMagick command:
  convert path/to/file.png -colorspace gray -format "%[fx:100*mean]" info:
 */
-function getLuminanceFromImage({ symbol, options }) {
+function getLuminanceForSymbol({ symbol, options }) {
   if (symbol.luminance) {
     if (options.debug || options.log) {
       console.log(
@@ -36,13 +46,13 @@ function getLuminanceFromImage({ symbol, options }) {
     }
     return Promise.resolve(symbol.luminance);
   }
-  const { path } = symbol;
+  const pathToMedianWeight = symbol.paths[500];
   if (options.debug || options.log) {
-    console.log(`Getting luminance for ${symbol.name} at ${path}`);
+    console.log(`Getting luminance for ${symbol.name} at ${pathToMedianWeight}`);
   }
   return new Promise((resolve, reject) => {
     imagemagick.convert(
-      [path, "-colorspace", "gray", "-format", '"%[fx:100*mean]"', "info:"],
+      [pathToMedianWeight, "-colorspace", "gray", "-format", '"%[fx:100*mean]"', "info:"],
       function (err, stdout) {
         if (err) {
           if (options.debug || options.log) {
@@ -52,7 +62,7 @@ function getLuminanceFromImage({ symbol, options }) {
         }
         const matches = stdout.match(/(\d+(\.\d+)?)/);
         if (!matches || matches.length < 1) {
-          const errorMessage = `Luminance couldn't be calculated for ${symbol.name}. Output from ImageMagick: ${stdout}`
+          const errorMessage = `Luminance couldn't be calculated for ${symbol.name}. Output from ImageMagick: ${stdout}`;
           if (options.debug || options.log) {
             console.error(errorMessage);
           }
@@ -86,7 +96,7 @@ function scaleLuminanceValues({ recipe, symbols, options }) {
   }));
 }
 
-function getSvgContents({ symbol, options }) {
+function getSvgContents({ symbol, weight, options }) {
   if (symbol.svg) {
     if (options.debug || options.log) {
       console.log(
@@ -95,7 +105,8 @@ function getSvgContents({ symbol, options }) {
     }
     return Promise.resolve(symbol.svg);
   }
-  const { path } = symbol;
+
+  const path = symbol.paths[weight];
   if (options.log) {
     console.log(`Getting svg for ${symbol.name} at ${path}`);
   }
@@ -117,11 +128,12 @@ function getSvgContents({ symbol, options }) {
         if (options.log) {
           console.log(`Resizing svg for ${symbol.name}...`);
         }
-        const [viewBoxX, viewBoxY, viewBoxWidth, viewBoxHeight] = viewBox.split(" ");
+        const [viewBoxX, viewBoxY, viewBoxWidth, viewBoxHeight] =
+          viewBox.split(" ");
         const scale = 20 / viewBoxWidth;
         // const translateX = viewboxDimensions[0] > 0 ? viewboxDimensions[0]
         const translateX = 0; // TODO: ........
-        const translateY = viewBoxY < 0 ? -1 * viewBoxY : 0
+        const translateY = viewBoxY < 0 ? -1 * viewBoxY : 0;
         const inner = svg.childNodes;
         const resizedSvg = `
 <svg width="20" height="20" viewBox="0 0 20 20">
@@ -136,8 +148,20 @@ function getSvgContents({ symbol, options }) {
         // console.log(`SVG for ${symbol.name} (${width}x${height}): ${svg}`);
       }
       // Move everything into a group element that can be added to a master SVG
-      resolve(svg);
+      resolve(encodeURIComponent(svg));
     });
+  });
+}
+
+function getSvgsForAllWeights({ symbol, options }) {
+  const weights = Object.keys(symbol.paths);
+  return Promise.all(
+    weights.map((weight) => getSvgContents({ symbol, weight, options }))
+  ).then((svgs) => {
+    return svgs.reduce((acc, svg, index) => {
+      acc[weights[index]] = svg;
+      return acc;
+    }, {});
   });
 }
 
@@ -145,9 +169,12 @@ async function processRecipe({ options, recipe }) {
   // Filter out non-existant symbols, add paths to ones that do exist
   const { omittedSymbols, permittedSymbols } = recipe.symbols.reduce(
     (acc, symbol) => {
-      const path = getPathToImage({ options, symbol });
-      if (fs.existsSync(path)) {
-        acc.permittedSymbols.push({ ...symbol, path });
+      const paths = getPathsToSvgsByWeight({ options, symbol });
+      const allPathsExist = Object.values(paths).every((path) =>
+        fs.existsSync(path)
+      );
+      if (allPathsExist) {
+        acc.permittedSymbols.push({ ...symbol, paths });
       } else {
         acc.omittedSymbols.push(symbol.name);
       }
@@ -158,18 +185,18 @@ async function processRecipe({ options, recipe }) {
 
   // Get the luminance values for each symbol
   // const symbolsWithLuminance = await Promise.all(permittedSymbols.map(async (symbol) => {
-  //   return await getLuminanceFromImage({ symbol, options });
+  //   return await getLuminanceForSymbol({ symbol, options });
   // }));
   const processedSymbols = [];
   const failedSymbols = [];
   for (const symbol of permittedSymbols) {
-    const luminance = await getLuminanceFromImage({ symbol, options });
-    const svg = await getSvgContents({ symbol, options });
-    if (!luminance || !svg) {
+    const luminance = await getLuminanceForSymbol({ symbol, options });
+    const svgs = await getSvgsForAllWeights({ symbol, options });
+    if (!luminance || !svgs) {
       failedSymbols.push(symbol.name);
       continue;
     }
-    processedSymbols.push({ ...symbol, luminance, svg });
+    processedSymbols.push({ ...symbol, luminance, svgs });
   }
 
   // Remap the luminance values to a scale of 0-255
@@ -215,7 +242,7 @@ async function generateSymbolSetFile({ recipe, options }) {
     name: symbol.name,
     luminance: symbol.luminance,
     filled: symbol.filled || false,
-    svg: encodeURIComponent(symbol.svg),
+    svgs: symbol.svgs,
   }));
   const fileContents = `
 const { SymbolSet } = require("./symbol-set.js");

@@ -309,7 +309,14 @@ function getSvgMarkupForPixel({ pixel, size, position, options }) {
   const pixelTranslationY =
     options.iconSize * size.height * (position.row / size.height);
   const iconScaleToFitPixel = options.iconSize / 20;
-  const symbolSvg = decodeURIComponent(symbol.svg);
+  const weights = [100, 200, 300, 500, 600, 700];
+  const weight =
+    pixelStyle === "light"
+      ? weights[Math.floor((pixel.luminance / 255) * (weights.length - 1))]
+      : weights[
+          Math.floor(((255 - pixel.luminance) / 255) * (weights.length - 1))
+        ];
+  const symbolSvg = decodeURIComponent(symbol.svgs[weight]);
   const symbolSvgDoc = parser.parseFromString(symbolSvg, "image/svg+xml");
   const symbolSvgContents = symbolSvgDoc.documentElement.childNodes;
 
@@ -321,6 +328,7 @@ function getSvgMarkupForPixel({ pixel, size, position, options }) {
     data-column="${position.column}"
     data-symbol="${symbol.name}"
     data-symbol-filled="${symbol.filled}"
+    data-weight="${weight}"
   >
     <rect
       width="${options.iconSize}"
