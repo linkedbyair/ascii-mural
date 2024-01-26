@@ -6,19 +6,25 @@ const { hideBin } = require("yargs/helpers");
 const argv = yargs(hideBin(process.argv)).argv;
 const { DOMParser } = require("xmldom");
 const parser = new DOMParser();
-const symbolSets = require("./symbol-sets");
+const { getSymbolSet } = require("./symbol-sets");
 const { getColorMode } = require("./color-modes");
 
 const DESIRED_RESOLUTION = 150; // DPI
 const OUTPUT_RESOLUTION = 72; // DPI
 
 async function run() {
+  // Throw errors for required arguments
+  if (!argv["symbol-set"]) {
+    throw new Error("Missing required argument: --symbol-set");
+  }
+
   if (!argv["input"]) {
     throw new Error("Missing required argument: --input");
   } else if (!fs.existsSync(argv["input"])) {
     throw new Error(`Input file does not exist: ${argv["input"]}`);
   }
 
+  // Parse optional arguments and set defaults
   let format = argv["format"];
   if (format) {
     if (!format.startsWith(".")) {
@@ -31,7 +37,6 @@ async function run() {
   } else {
     format = ".tiff";
   }
-
   let output;
   if (argv["output"] && path.extname(argv["output"]) !== format) {
     throw new Error(
@@ -47,22 +52,9 @@ async function run() {
     const outputFilename = originalFilename + format;
     output = path.resolve(__dirname, "../output", outputFilename);
   }
-
   const outputBasePath = output.replace(path.extname(output), "");
-
-  // TODO: either make this interactive or make it more flexible.
-  // User should be able to pass in
-  // - a symbol set ID (toCamelCase)
-  // - a symbol set ID (kebab-case)
-  // - a symbol set name (human readable, wrapped in quotes)
-  if (!argv["symbol-set"]) {
-    throw new Error("Missing required argument: --symbol-set");
-  } else if (!symbolSets.hasOwnProperty(argv["symbol-set"])) {
-    throw new Error(`Symbol set does not exist: ${argv["symbol-set"]}`);
-  }
-
+  const symbolSet = getSymbolSet(argv["symbol-set"]);
   const colorMode = getColorMode(argv["color-mode"]);
-
   const threshold = typeof argv.threshold !== "undefined" ? parseInt(argv.threshold, 10) : 128;
   if (
     typeof threshold !== "number" ||
@@ -72,26 +64,26 @@ async function run() {
   ) {
     throw new Error(`Threshold must be a number between 0 and 255. You passed in ${threshold}.`);
   }
-
   const skipReassembly = Boolean(argv["skip-reassembly"]) || false;
-
   const isCheckered = Boolean(argv["checkered-pattern"]) || false;
-
   const backgroundColor = argv["background-color"] || null;
+  const input = argv["input"];
+  const log = Boolean(argv["log"]) || false;
+  const widthInInches = parseInt(argv["width"], 10) || 1;
 
   const options = {
-    input: argv.input,
-    output: output,
-    outputBasePath: outputBasePath,
-    format: format,
-    symbolSet: symbolSets[argv["symbol-set"]],
-    colorMode: colorMode,
-    threshold: threshold,
-    isCheckered: isCheckered,
-    backgroundColor: backgroundColor,
-    log: Boolean(argv.log),
-    skipReassembly: skipReassembly,
-    widthInInches: parseInt(argv["width"], 10) || 1,
+    input,
+    output,
+    outputBasePath,
+    format,
+    symbolSet,
+    colorMode,
+    threshold,
+    isCheckered,
+    backgroundColor,
+    skipReassembly,
+    log,
+    widthInInches,
   };
 
   const size = await getImageSize({ options });
