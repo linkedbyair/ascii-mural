@@ -7,8 +7,7 @@ const argv = yargs(hideBin(process.argv)).argv;
 const { DOMParser } = require("xmldom");
 const parser = new DOMParser();
 const symbolSets = require("./symbol-sets");
-const { colorModes } = require("./color-modes");
-const { COLOR_MODES } = require("./constants");
+const { getColorMode } = require("./color-modes");
 
 const DESIRED_RESOLUTION = 150; // DPI
 const OUTPUT_RESOLUTION = 72; // DPI
@@ -53,7 +52,7 @@ async function run() {
 
   // TODO: either make this interactive or make it more flexible.
   // User should be able to pass in
-  // - a symbol set ID (camelCase)
+  // - a symbol set ID (toCamelCase)
   // - a symbol set ID (kebab-case)
   // - a symbol set name (human readable, wrapped in quotes)
   if (!argv["symbol-set"]) {
@@ -62,14 +61,7 @@ async function run() {
     throw new Error(`Symbol set does not exist: ${argv["symbol-set"]}`);
   }
 
-  let colorMode;
-  if (argv["color-mode"] && !COLOR_MODES.hasOwnProperty(argv["color-mode"])) {
-    throw new Error(`Color mode does not exist: ${argv["color-mode"]}`);
-  } else if (argv["color-mode"]) {
-    colorMode = argv["color-mode"];
-  } else {
-    colorMode = COLOR_MODES.FULL_COLOR;
-  }
+  const colorMode = getColorMode(argv["color-mode"]);
 
   const threshold = typeof argv.threshold !== "undefined" ? parseInt(argv.threshold, 10) : 128;
   if (
@@ -301,15 +293,14 @@ function getSvgMarkupForPixel({ pixel, size, position, options }) {
   }
 
   const symbol = options.symbolSet.getSymbol({ pixel, options });
-  const colorFunction = colorModes[options.colorMode].bind(null, options);
   const pixelStyle = pixel.luminance < options.threshold ? "dark" : "light";
   const backgroundColor =
     pixelStyle === "light"
       ? options.backgroundColor || "white"
-      : colorFunction(pixel);
+      : options.colorMode(options, pixel);
   const textColor =
     pixelStyle === "light"
-      ? colorFunction(pixel)
+      ? options.colorMode(options, pixel)
       : options.backgroundColor || "white";
   const justBackground = pixel.luminance === 255;
   const translateX =

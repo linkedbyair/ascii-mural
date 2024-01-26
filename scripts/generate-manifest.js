@@ -5,19 +5,19 @@ const { hideBin } = require("yargs/helpers");
 const argv = yargs(hideBin(process.argv)).argv;
 
 const recipes = require("./recipes");
-const { toKebabCase, toCamelCase } = require("./utilities");
+const { toKebabCase, toCamelCase } = require("js-convert-case");
 
 async function generateIndexFile({ recipes, options }) {
   const { importLines, exportLines } = recipes.reduce(
     ({ importLines, exportLines }, { name }) => {
-      const camelCaseName = toCamelCase(name);
-      const kebabCaseName = toKebabCase(name);
+      const toCamelCaseName = toCamelCase(name);
+      const toKebabCaseName = toKebabCase(name);
       return {
         importLines: [
           ...importLines,
-          `const ${camelCaseName} = require("./${kebabCaseName}.js")`,
+          `const ${toCamelCaseName} = require("./${toKebabCaseName}.js")`,
         ],
-        exportLines: [...exportLines, `${camelCaseName}: ${camelCaseName}`],
+        exportLines: [...exportLines, `${toCamelCaseName}: ${toCamelCaseName}`],
       };
     },
     { importLines: [], exportLines: [] }

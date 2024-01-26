@@ -2,7 +2,7 @@ const { SymbolSet } = require("./symbol-set.js");
 
 module.exports = new SymbolSet(
   "social2",
-  "Social (2)",
+  "Social 2",
   [
   {
     "name": "face_2",

@@ -1,4 +1,4 @@
-const { COLOR_MODES } = require("./constants");
+const { toCamelCase } = require("js-convert-case");
 
 function fullColor(settings = {}, { red, green, blue }) {
   return `rgb(${red}, ${green}, ${blue})`;
@@ -17,9 +17,24 @@ function blackAndWhite(settings = {}, { luminance }) {
 
 const colorModes = {
   default: fullColor,
-  [COLOR_MODES.FULL_COLOR]: fullColor,
-  [COLOR_MODES.GRAYSCALE]: grayscale,
-  [COLOR_MODES.BLACK_AND_WHITE]: blackAndWhite,
+  fullColor: fullColor,
+  grayscale: grayscale,
+  blackAndWhite: blackAndWhite,
+};
+
+const getColorMode = (setting) => {
+  if (!setting) {
+    return colorModes.default;
+  }
+  const toCamelCaseSetting = toCamelCase(setting);
+  if (!colorModes[toCamelCaseSetting]) {
+    throw new Error(
+      `Color mode "${setting}" is not supported. Supported color modes are: ${Object.keys(
+        colorModes
+      ).join(", ")}`
+    );
+  }
+  return colorModes[toCamelCaseSetting] || colorModes.default;
 };
 
 module.exports = {
@@ -27,4 +42,5 @@ module.exports = {
   grayscale: grayscale,
   blackAndWhite: blackAndWhite,
   colorModes: colorModes,
+  getColorMode: getColorMode
 };

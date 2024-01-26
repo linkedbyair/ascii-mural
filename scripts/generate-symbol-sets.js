@@ -8,11 +8,11 @@ const { DOMParser } = require("xmldom");
 
 const recipes = require("./recipes");
 const {
-  toHumanReadable,
+  toHeaderCase,
   toKebabCase,
   toCamelCase,
   toSnakeCase,
-} = require("./utilities");
+} = require("js-convert-case");
 
 function getPathToImage({ options, symbol }) {
   const { iconDirectory } = options;
@@ -222,7 +222,7 @@ const { SymbolSet } = require("./symbol-set.js");
 
 module.exports = new SymbolSet(
   "${id || toCamelCase(name)}",
-  "${toHumanReadable(name)}",
+  "${toHeaderCase(name)}",
   ${JSON.stringify(json, null, 2)}
 );
 `.trimStart();
@@ -265,7 +265,7 @@ function run() {
         name.trim(),
         toKebabCase(name.trim()),
         toCamelCase(name.trim()),
-        toHumanReadable(name.trim()),
+        toHeaderCase(name.trim()),
       ])
       .flat();
     recipesToUse = recipes.filter(

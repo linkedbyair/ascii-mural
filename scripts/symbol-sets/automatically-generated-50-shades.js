@@ -2,7 +2,7 @@ const { SymbolSet } = require("./symbol-set.js");
 
 module.exports = new SymbolSet(
   "automaticallyGenerated50Shades",
-  "Automatically Generated (50 Shades)",
+  "Automatically Generated 50 Shades",
   [
   {
     "name": "repeat_on",

@@ -2,7 +2,7 @@ module.exports = {
   id: "social",
   name: "Social",
   symbols: [
-    { name: "woman", filled: false }, 
+    // { name: "woman", filled: false }, 
     { name: "person", filled: false }, 
     { name: "scuba_diving", filled: false }, 
     { name: "downhill_skiing", filled: false }, 
