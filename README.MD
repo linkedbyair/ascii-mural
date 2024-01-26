@@ -107,7 +107,7 @@ You can optionally pass in a `--input` argument to specify a custom list of icon
 yarn generate:recipe --icon-directory=/path/to/material-design-icons-master/symbols/web --name="Your Recipe Name" --size="number-of-symbols-in-recipe" --input=/path/to/list-of-icons.json
 ```
 
-Note that this command only generates a recipe. You will need to the [generate the symbol set](#generating-symbol-sets-from-recipes) and [the manifest](#generating-the-symbol-set-manifest) to get the web-based tool to show it as an option.
+Note that this command only generates a recipe. You will need to the [generate the symbol set](#generating-symbol-sets-from-recipes) in order to use this collection of icons.
 
 # Generating symbol sets from recipes
 
@@ -145,28 +145,6 @@ This repository has a script you can run to automatically generate a symbol set 
 
 ```sh
 yarn generate:symbol-sets --icon-directory=$icon_dir --recipes=name_of_your_symbol_set
-```
-
-**3. Regenerate the symbol set manifest**
-
-A single file exports all of the available symbol sets for the tool to use. This file can be automatically generated with a script.
-
-```sh
-yarn generate:manifest
-```
-
-**4. Re-build this app's javascript
-
-```sh
-yarn build
-```
-
-# Generating the symbol set manifest 
-
-A single file exports all of the available symbol sets for the tool to use. This file can be automatically generated with a script.
-
-```sh
-yarn generate:manifest
 ```
 
 # Generate an image

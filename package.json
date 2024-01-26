@@ -7,7 +7,6 @@
     "generate:icon-list": "node scripts/generate-icon-list.js",
     "generate:recipe": "node scripts/generate-recipe.js --output-directory=./scripts/recipes",
     "generate:symbol-sets": "node scripts/generate-symbol-sets.js",
-    "generate:manifest": "node scripts/generate-manifest.js",
     "generate:image": "node scripts/generate-image.js",
     "build:js": "esbuild src/index.js --bundle --minify --sourcemap --outfile=build/index.js",
     "build:css": "tailwindcss build -i src/index.css -o build/index.css",
