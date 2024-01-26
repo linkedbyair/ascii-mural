@@ -309,7 +309,7 @@ function getSvgMarkupForPixel({ pixel, size, position, options }) {
   const pixelTranslationY =
     options.iconSize * size.height * (position.row / size.height);
   const iconScaleToFitPixel = options.iconSize / 20;
-  const weights = [100, 200, 300, 500, 600, 700];
+  const weights = [700, 600, 500, 300, 200, 100];
   const weight =
     pixelStyle === "light"
       ? weights[Math.floor((pixel.luminance / 255) * (weights.length - 1))]
@@ -329,6 +329,7 @@ function getSvgMarkupForPixel({ pixel, size, position, options }) {
     data-symbol="${symbol.name}"
     data-symbol-filled="${symbol.filled}"
     data-weight="${weight}"
+    data-luminance="${pixel.luminance}"
   >
     <rect
       width="${options.iconSize}"
