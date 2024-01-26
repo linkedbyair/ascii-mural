@@ -304,27 +304,35 @@ function getSvgMarkupForPixel({ pixel, size, position, options }) {
       ? options.colorMode(options, pixel)
       : options.backgroundColor || "white";
   const justBackground = pixel.luminance === 255;
-  const translateX =
+  const pixelTranslationX =
     options.iconSize * size.width * (position.column / size.width);
-  const translateY =
+  const pixelTranslationY =
     options.iconSize * size.height * (position.row / size.height);
-  const transform = `translate(${translateX}, ${translateY})`;
-  const scale = `scale(${options.iconSize / 20})`; // NOTE: assuming all symbols sources are 20x20
+  const iconScaleToFitPixel = options.iconSize / 20;
   const symbolSvg = decodeURIComponent(symbol.svg);
   const symbolSvgDoc = parser.parseFromString(symbolSvg, "image/svg+xml");
   const symbolSvgContents = symbolSvgDoc.documentElement.childNodes;
 
   const group = `
-  <g id="${symbol.name}" transform="${transform}" data-row="${
-    position.row
-  }" data-column="${position.column}" data-symbol="${
-    symbol.name
-  }" data-symbol-filled="${symbol.filled}">
-    <rect width="${options.iconSize}" height="${
-    options.iconSize
-  }" fill="${backgroundColor}" x="0" y="0" />
-    <g fill="${textColor}" transform="${scale}">
-      ${justBackground ? "" : symbolSvgContents}
+  <g
+    id="${symbol.name}"
+    transform="translate(${pixelTranslationX}, ${pixelTranslationY})"
+    data-row="${position.row}"
+    data-column="${position.column}"
+    data-symbol="${symbol.name}"
+    data-symbol-filled="${symbol.filled}"
+  >
+    <rect
+      width="${options.iconSize}"
+      height="${options.iconSize}"
+      fill="${backgroundColor}"
+      x="0"
+      y="0"
+    />
+    <g transform="translate(0.5075, 0.5075) scale(0.66)">
+      <g fill="${textColor}" transform="scale(${iconScaleToFitPixel})">
+        ${justBackground ? "" : symbolSvgContents}
+      </g>
     </g>
   </g>
   `;
