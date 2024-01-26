@@ -318,6 +318,7 @@ function getSvgMarkupForPixel({ pixel, size, position, options }) {
   const symbolSvg = decodeURIComponent(symbol.svgs[weight]);
   const symbolSvgDoc = parser.parseFromString(symbolSvg, "image/svg+xml");
   const symbolSvgContents = symbolSvgDoc.documentElement.childNodes;
+  const cornerRadius = options.iconSize / 8;
 
   const group = `
   <g
@@ -336,6 +337,8 @@ function getSvgMarkupForPixel({ pixel, size, position, options }) {
       fill="${backgroundColor}"
       x="0"
       y="0"
+      rx="${cornerRadius}"
+      ry="${cornerRadius}"
     />
     <g transform="translate(0.5075, 0.5075) scale(0.66)">
       <g fill="${textColor}" transform="scale(${iconScaleToFitPixel})">
