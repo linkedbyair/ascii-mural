@@ -173,9 +173,11 @@ function getPixelData({ rect, options }) {
     imagemagick.convert(
       [
         options.input,
+        "-matte",
+        "-background",
+        "transparent",
         rect && "-extent",
         rect && `${width}x${height}+${left}+${top}`,
-        "-matte",
         "text:",
       ].filter((x) => Boolean(x)),
       (error, data) => {
@@ -212,7 +214,8 @@ function getPixelData({ rect, options }) {
             const blue = parseInt(channels[3], 10);
             const alpha = parseInt(channels[4], 10);
             const luminance = Math.round((red + green + blue) / 3);
-            const color = `rgb(${red}, ${green}, ${blue})`;
+            const color = `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+          
             return {
               red,
               green,
@@ -223,6 +226,7 @@ function getPixelData({ rect, options }) {
             };
           })
           .filter((pixel) => pixel !== null);
+
         resolve(pixels);
       }
     );
