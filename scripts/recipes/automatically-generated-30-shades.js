@@ -4,128 +4,103 @@ module.exports = {
   symbols: [
   {
     "name": "repeat_on",
-    "filled": false,
-    "luminance": 54
+    "filled": true
   },
   {
     "name": "font_download",
-    "filled": true,
-    "luminance": 81
+    "filled": true
   },
   {
     "name": "1x_mobiledata_badge",
-    "filled": true,
-    "luminance": 88
+    "filled": true
   },
   {
     "name": "browse_activity",
-    "filled": true,
-    "luminance": 95
+    "filled": true
   },
   {
     "name": "ad_group",
-    "filled": true,
-    "luminance": 102
+    "filled": true
   },
   {
     "name": "assistant",
-    "filled": true,
-    "luminance": 109
+    "filled": true
   },
   {
     "name": "10k",
-    "filled": true,
-    "luminance": 116
+    "filled": true
   },
   {
     "name": "add_circle",
-    "filled": true,
-    "luminance": 123
+    "filled": true
   },
   {
     "name": "app_promo",
-    "filled": true,
-    "luminance": 130
+    "filled": true
   },
   {
     "name": "add_notes",
-    "filled": false,
-    "luminance": 137
+    "filled": true
   },
   {
     "name": "account_tree",
-    "filled": true,
-    "luminance": 144
+    "filled": true
   },
   {
     "name": "3p",
-    "filled": false,
-    "luminance": 151
+    "filled": true
   },
   {
     "name": "7mp",
-    "filled": false,
-    "luminance": 158
+    "filled": true
   },
   {
     "name": "2d",
-    "filled": false,
-    "luminance": 165
+    "filled": true
   },
   {
     "name": "align_justify_space_around",
-    "filled": false,
-    "luminance": 172
+    "filled": true
   },
   {
     "name": "add_call",
-    "filled": false,
-    "luminance": 179
+    "filled": true
   },
   {
     "name": "app_badging",
-    "filled": false,
-    "luminance": 186
+    "filled": true
   },
   {
     "name": "arrow_or_edge",
-    "filled": false,
-    "luminance": 193
+    "filled": true
   },
   {
     "name": "arrow_and_edge",
-    "filled": false,
-    "luminance": 200
+    "filled": true
   },
   {
     "name": "align_flex_center",
-    "filled": false,
-    "luminance": 207
+    "filled": true
   },
   {
     "name": "arrow_top_left",
-    "filled": false,
-    "luminance": 214
+    "filled": true
   },
   {
     "name": "done_all",
-    "filled": false,
-    "luminance": 221
+    "filled": true
   },
   {
     "name": "close_small",
-    "filled": false,
-    "luminance": 228
+    "filled": true
   },
   {
     "name": "chevron_left",
-    "filled": false,
-    "luminance": 235
+    "filled": true
   },
   {
     "name": "minimize",
-    "filled": false,
-    "luminance": 242
+    "filled": true
   }
 ]
 }

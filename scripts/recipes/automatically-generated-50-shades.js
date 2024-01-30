@@ -4,213 +4,171 @@ module.exports = {
   symbols: [
   {
     "name": "repeat_on",
-    "filled": false,
-    "luminance": 54
+    "filled": true
   },
   {
     "name": "font_download",
-    "filled": true,
-    "luminance": 81
+    "filled": true
   },
   {
     "name": "yard",
-    "filled": true,
-    "luminance": 86
+    "filled": true
   },
   {
     "name": "bedroom_child",
-    "filled": true,
-    "luminance": 90
+    "filled": true
   },
   {
     "name": "4g_mobiledata_badge",
-    "filled": true,
-    "luminance": 94
+    "filled": true
   },
   {
     "name": "dns",
-    "filled": true,
-    "luminance": 98
+    "filled": true
   },
   {
     "name": "ad_group",
-    "filled": true,
-    "luminance": 102
+    "filled": true
   },
   {
     "name": "auto_read_pause",
-    "filled": true,
-    "luminance": 106
+    "filled": true
   },
   {
     "name": "developer_board_off",
-    "filled": true,
-    "luminance": 110
+    "filled": true
   },
   {
     "name": "badge",
-    "filled": true,
-    "luminance": 114
+    "filled": true
   },
   {
     "name": "1k_plus",
-    "filled": true,
-    "luminance": 118
+    "filled": true
   },
   {
     "name": "10mp",
-    "filled": true,
-    "luminance": 122
+    "filled": true
   },
   {
     "name": "airplane_ticket",
-    "filled": true,
-    "luminance": 126
+    "filled": true
   },
   {
     "name": "app_promo",
-    "filled": true,
-    "luminance": 130
+    "filled": true
   },
   {
     "name": "account_circle_off",
-    "filled": true,
-    "luminance": 134
+    "filled": true
   },
   {
     "name": "ad_units",
-    "filled": true,
-    "luminance": 138
+    "filled": true
   },
   {
     "name": "add_card",
-    "filled": false,
-    "luminance": 142
+    "filled": true
   },
   {
     "name": "24mp",
-    "filled": false,
-    "luminance": 146
+    "filled": true
   },
   {
     "name": "ac_unit",
-    "filled": false,
-    "luminance": 150
+    "filled": true
   },
   {
     "name": "4mp",
-    "filled": false,
-    "luminance": 154
+    "filled": true
   },
   {
     "name": "7mp",
-    "filled": false,
-    "luminance": 158
+    "filled": true
   },
   {
     "name": "2k_plus",
-    "filled": false,
-    "luminance": 162
+    "filled": true
   },
   {
     "name": "18_up_rating",
-    "filled": false,
-    "luminance": 166
+    "filled": true
   },
   {
     "name": "add_circle",
-    "filled": false,
-    "luminance": 170
+    "filled": true
   },
   {
     "name": "ambient_screen",
-    "filled": false,
-    "luminance": 174
+    "filled": true
   },
   {
     "name": "airwave",
-    "filled": false,
-    "luminance": 178
+    "filled": true
   },
   {
     "name": "4g_plus_mobiledata",
-    "filled": false,
-    "luminance": 182
+    "filled": true
   },
   {
     "name": "app_badging",
-    "filled": false,
-    "luminance": 186
+    "filled": true
   },
   {
     "name": "4g_mobiledata",
-    "filled": false,
-    "luminance": 190
+    "filled": true
   },
   {
     "name": "arrow_selector_tool",
-    "filled": true,
-    "luminance": 194
+    "filled": true
   },
   {
     "name": "align_center",
-    "filled": false,
-    "luminance": 198
+    "filled": true
   },
   {
     "name": "currency_franc",
-    "filled": false,
-    "luminance": 202
+    "filled": true
   },
   {
     "name": "agender",
-    "filled": false,
-    "luminance": 206
+    "filled": true
   },
   {
     "name": "1x_mobiledata",
-    "filled": false,
-    "luminance": 210
+    "filled": true
   },
   {
     "name": "arrow_top_left",
-    "filled": false,
-    "luminance": 214
+    "filled": true
   },
   {
     "name": "call_made",
-    "filled": false,
-    "luminance": 218
+    "filled": true
   },
   {
     "name": "height",
-    "filled": false,
-    "luminance": 222
+    "filled": true
   },
   {
     "name": "emoticon",
-    "filled": false,
-    "luminance": 226
+    "filled": true
   },
   {
     "name": "r_mobiledata",
-    "filled": false,
-    "luminance": 230
+    "filled": true
   },
   {
     "name": "close_small",
-    "filled": true,
-    "luminance": 234
+    "filled": true
   },
   {
     "name": "arrow_drop_down",
-    "filled": false,
-    "luminance": 239
+    "filled": true
   },
   {
     "name": "check_indeterminate_small",
-    "filled": false,
-    "luminance": 243
+    "filled": true
   }
 ]
 }

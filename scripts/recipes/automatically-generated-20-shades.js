@@ -4,93 +4,75 @@ module.exports = {
   symbols: [
   {
     "name": "repeat_on",
-    "filled": false,
-    "luminance": 54
+    "filled": true
   },
   {
     "name": "font_download",
-    "filled": true,
-    "luminance": 81
+    "filled": true
   },
   {
     "name": "ev_mobiledata_badge",
-    "filled": true,
-    "luminance": 91
+    "filled": true
   },
   {
     "name": "attach_email",
-    "filled": true,
-    "luminance": 101
+    "filled": true
   },
   {
     "name": "cinematic_blur",
-    "filled": true,
-    "luminance": 111
+    "filled": true
   },
   {
     "name": "11mp",
-    "filled": true,
-    "luminance": 121
+    "filled": true
   },
   {
     "name": "add_card",
-    "filled": true,
-    "luminance": 131
+    "filled": true
   },
   {
     "name": "airport_shuttle",
-    "filled": true,
-    "luminance": 141
+    "filled": true
   },
   {
     "name": "3p",
-    "filled": false,
-    "luminance": 151
+    "filled": true
   },
   {
     "name": "4k_plus",
-    "filled": false,
-    "luminance": 161
+    "filled": true
   },
   {
     "name": "add_task",
-    "filled": false,
-    "luminance": 171
+    "filled": true
   },
   {
     "name": "3d_rotation",
-    "filled": false,
-    "luminance": 181
+    "filled": true
   },
   {
     "name": "artist",
-    "filled": false,
-    "luminance": 191
+    "filled": true
   },
   {
     "name": "airline_stops",
-    "filled": false,
-    "luminance": 201
+    "filled": true
   },
   {
     "name": "architecture",
-    "filled": false,
-    "luminance": 211
+    "filled": true
   },
   {
     "name": "done_all",
-    "filled": false,
-    "luminance": 221
+    "filled": true
   },
   {
     "name": "arrow_downward_alt",
-    "filled": false,
-    "luminance": 231
+    "filled": true
   },
   {
     "name": "minimize",
-    "filled": false,
-    "luminance": 242
+    "filled": true
   }
 ]
 }

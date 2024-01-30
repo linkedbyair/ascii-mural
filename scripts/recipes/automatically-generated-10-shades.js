@@ -4,7 +4,7 @@ module.exports = {
   symbols: [
   {
     "name": "repeat_on",
-    "filled": false,
+    "filled": true,
     "luminance": 54
   },
   {
@@ -29,28 +29,23 @@ module.exports = {
   },
   {
     "name": "4k_plus",
-    "filled": false,
-    "luminance": 161
+    "filled": true
   },
   {
     "name": "3d_rotation",
-    "filled": false,
-    "luminance": 181
+    "filled": true
   },
   {
     "name": "airline_stops",
-    "filled": false,
-    "luminance": 201
+    "filled": true
   },
   {
     "name": "done_all",
-    "filled": false,
-    "luminance": 221
+    "filled": true
   },
   {
     "name": "minimize",
-    "filled": false,
-    "luminance": 242
+    "filled": true
   }
 ]
 }
